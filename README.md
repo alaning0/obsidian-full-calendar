@@ -11,9 +11,11 @@ Obsidian calendar plugin based on [FullCalendar](https://github.com/fullcalendar
 - Configurable today background color (Settings → Full Calendar; default `#4a4a4a`)
 - Local calendars load notes in nested subfolders (e.g. `Year/2026-07/...`)
 - Click a **day number** to open that day's Daily/Periodic Notes note (creates it if needed); click the **rest of the cell** to create an event
+- Click a **week number** to open that week's Periodic Notes weekly note (e.g. `Year/2026-W31.md`)
 - Ribbon / open actions focus an existing calendar or day-note tab when it is already open but unfocused
 - Sidebar calendar opens on the **left** with week view by default (command: **Open in left sidebar**)
 - **Year** view: scrollable big-picture day grid for the whole calendar year, sticky month banners, scrolls to today
+- ISO **week numbers** on the left in month/year (and other) views
 
 ## Installation
 

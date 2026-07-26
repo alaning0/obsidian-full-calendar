@@ -283,6 +283,8 @@ interface ExtraRenderProps {
     forceNarrow?: boolean;
     /** Open the daily/periodic note for this calendar day (day-number clicks). */
     openDailyNote?: (date: Date) => Promise<void>;
+    /** Open the weekly periodic note for this week (week-number clicks). */
+    openWeeklyNote?: (date: Date) => Promise<void>;
 }
 
 export function renderCalendar(
@@ -302,6 +304,7 @@ export function renderCalendar(
         openContextMenuForEvent,
         toggleTask,
         openDailyNote,
+        openWeeklyNote,
     } = settings || {};
     const modifyEventCallback =
         modifyEvent &&
@@ -407,6 +410,10 @@ export function renderCalendar(
             },
         },
         firstDay: settings?.firstDay,
+        // Left week-number rail (dayGrid: badge on first day of each week).
+        weekNumbers: true,
+        weekNumberCalculation: "ISO",
+        weekText: "W",
         ...(settings?.timeFormat24h && {
             eventTimeFormat: {
                 hour: "numeric",
@@ -448,6 +455,23 @@ export function renderCalendar(
                 ensureMonthHeaderForDay(info.el, (date, options) =>
                     info.view.calendar.formatDate(date, options)
                 );
+            }
+
+            // Week number sits on the first day cell of each row.
+            if (openWeeklyNote) {
+                const weekNumberEl = info.el.querySelector(
+                    ".fc-daygrid-week-number"
+                ) as HTMLElement | null;
+                if (weekNumberEl) {
+                    weekNumberEl.addEventListener("mousedown", (e) => {
+                        e.stopPropagation();
+                    });
+                    weekNumberEl.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        void openWeeklyNote(info.date);
+                    });
+                }
             }
 
             if (!openDailyNote) {

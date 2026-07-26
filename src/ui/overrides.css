@@ -106,6 +106,17 @@
 	border-bottom: 1px solid var(--background-modifier-border);
 	box-shadow: 0 1px 0 var(--background-modifier-border);
 }
+
+/* Week numbers (ISO) — left rail on first day of each week in dayGrid. */
+.fc .fc-daygrid-week-number {
+	font-size: 0.75em;
+	font-weight: 600;
+	color: var(--text-muted);
+	background-color: var(--background-secondary);
+	min-width: 1.75em;
+	cursor: pointer;
+}
+
 .fc-button-active {
 	color: var(--text-on-accent) !important;
 }
