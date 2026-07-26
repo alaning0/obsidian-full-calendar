@@ -84,7 +84,7 @@ interface ExtraRenderProps {
     modifyEvent?: (event: EventApi, oldEvent: EventApi) => Promise<boolean>;
     eventMouseEnter?: (info: EventHoveringArg) => void;
     firstDay?: number;
-    initialView?: { desktop: string; mobile: string };
+    initialView?: { desktop: string; mobile: string; sidebar?: string };
     timeFormat24h?: boolean;
     openContextMenuForEvent?: (
         event: EventApi,
@@ -102,6 +102,8 @@ export function renderCalendar(
     settings?: ExtraRenderProps
 ): Calendar {
     const isMobile = window.innerWidth < 500;
+    // Sidebar uses forceNarrow on desktop; real phones use width.
+    const isSidebar = !!settings?.forceNarrow && !isMobile;
     const isNarrow = settings?.forceNarrow || isMobile;
     const {
         eventClick,
@@ -129,6 +131,11 @@ export function renderCalendar(
             }
         });
 
+    const initialView = isSidebar
+        ? settings?.initialView?.sidebar || "timeGridWeek"
+        : settings?.initialView?.[isNarrow ? "mobile" : "desktop"] ||
+          (isNarrow ? "timeGrid3Days" : "timeGridWeek");
+
     // FullCalendar disables the built-in "today" button whenever the visible
     // range already includes today (week/month). Use a custom button so it
     // stays clickable and can still jump/scroll to now.
@@ -147,9 +154,7 @@ export function renderCalendar(
             rrulePlugin,
         ],
         googleCalendarApiKey: "AIzaSyDIiklFwJXaLWuT_4y6I9ZRVVsPuf4xGrk",
-        initialView:
-            settings?.initialView?.[isNarrow ? "mobile" : "desktop"] ||
-            (isNarrow ? "timeGrid3Days" : "timeGridWeek"),
+        initialView,
         nowIndicator: true,
         scrollTimeReset: false,
         dayMaxEvents: true,
@@ -172,13 +177,13 @@ export function renderCalendar(
             : !isMobile
             ? {
                   right: "goToday,prev,next",
-                  left: "timeGrid3Days,timeGridDay,listWeek",
+                  left: "timeGridWeek,timeGrid3Days,timeGridDay,listWeek",
               }
             : false,
         footerToolbar: isMobile
             ? {
                   right: "goToday,prev,next",
-                  left: "timeGrid3Days,timeGridDay,listWeek",
+                  left: "timeGridWeek,timeGrid3Days,timeGridDay,listWeek",
               }
             : false,
 
@@ -187,6 +192,11 @@ export function renderCalendar(
                 type: "timeGrid",
                 duration: { days: 1 },
                 buttonText: isNarrow ? "1" : "day",
+            },
+            timeGridWeek: {
+                type: "timeGrid",
+                duration: { weeks: 1 },
+                buttonText: isNarrow ? "7" : "week",
             },
             timeGrid3Days: {
                 type: "timeGrid",

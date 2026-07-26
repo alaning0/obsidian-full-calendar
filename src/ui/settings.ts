@@ -24,6 +24,7 @@ export interface FullCalendarSettings {
     initialView: {
         desktop: string;
         mobile: string;
+        sidebar: string;
     };
     timeFormat24h: boolean;
     clickToCreateEventFromMonthView: boolean;
@@ -38,6 +39,7 @@ export const DEFAULT_SETTINGS: FullCalendarSettings = {
     initialView: {
         desktop: "timeGridWeek",
         mobile: "timeGrid3Days",
+        sidebar: "timeGridWeek",
     },
     timeFormat24h: false,
     clickToCreateEventFromMonthView: true,
@@ -62,6 +64,13 @@ const INITIAL_VIEW_OPTIONS = {
         listWeek: "List",
     },
     MOBILE: {
+        timeGridWeek: "Week",
+        timeGrid3Days: "3 Days",
+        timeGridDay: "Day",
+        listWeek: "List",
+    },
+    SIDEBAR: {
+        timeGridWeek: "Week",
         timeGrid3Days: "3 Days",
         timeGridDay: "Day",
         listWeek: "List",
@@ -207,6 +216,24 @@ export class FullCalendarSettingTab extends PluginSettingTab {
                 dropdown.setValue(this.plugin.settings.initialView.mobile);
                 dropdown.onChange(async (initialView) => {
                     this.plugin.settings.initialView.mobile = initialView;
+                    await this.plugin.saveSettings();
+                });
+            });
+
+        new Setting(containerEl)
+            .setName("Sidebar Initial View")
+            .setDesc("Choose the initial view in the left sidebar calendar.")
+            .addDropdown((dropdown) => {
+                Object.entries(INITIAL_VIEW_OPTIONS.SIDEBAR).forEach(
+                    ([value, display]) => {
+                        dropdown.addOption(value, display);
+                    }
+                );
+                dropdown.setValue(
+                    this.plugin.settings.initialView.sidebar || "timeGridWeek"
+                );
+                dropdown.onChange(async (initialView) => {
+                    this.plugin.settings.initialView.sidebar = initialView;
                     await this.plugin.saveSettings();
                 });
             });
