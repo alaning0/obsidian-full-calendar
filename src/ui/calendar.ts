@@ -8,6 +8,7 @@ import {
     EventHoveringArg,
     EventSourceInput,
 } from "@fullcalendar/core";
+import { NowTimer } from "@fullcalendar/common";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import rrulePlugin from "@fullcalendar/rrule";
@@ -33,6 +34,43 @@ rrulePlugin.recurringTypes[0].expand = function (errd, fr, de) {
                 )
             );
         });
+};
+
+// FullCalendar's NowTimer precomputes the next "today" before sleeping; after wake
+// it can apply a stale day. Always recompute, and refresh when the tab becomes visible.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const NowTimerProto = NowTimer.prototype as any;
+
+NowTimerProto.componentDidMount = function () {
+    this.setTimeout();
+    this.handleVisibility = () => {
+        if (!document.hidden) {
+            this.refreshNow();
+        }
+    };
+    document.addEventListener("visibilitychange", this.handleVisibility);
+};
+
+NowTimerProto.componentWillUnmount = function () {
+    this.clearTimeout();
+    if (this.handleVisibility) {
+        document.removeEventListener("visibilitychange", this.handleVisibility);
+    }
+};
+
+NowTimerProto.refreshNow = function () {
+    this.clearTimeout();
+    const timing = this.computeTiming();
+    this.setState(timing.currentState, () => {
+        this.setTimeout();
+    });
+};
+
+NowTimerProto.setTimeout = function () {
+    const waitMs = this.computeTiming().waitMs;
+    this.timeoutId = setTimeout(() => {
+        this.refreshNow();
+    }, waitMs);
 };
 
 interface ExtraRenderProps {
@@ -88,7 +126,11 @@ export function renderCalendar(
             }
         });
 
-    const cal = new Calendar(containerEl, {
+    // FullCalendar disables the built-in "today" button whenever the visible
+    // range already includes today (week/month). Use a custom button so it
+    // stays clickable and can still jump/scroll to now.
+    let cal: Calendar;
+    cal = new Calendar(containerEl, {
         plugins: [
             // View plugins
             dayGridPlugin,
@@ -108,22 +150,31 @@ export function renderCalendar(
         nowIndicator: true,
         scrollTimeReset: false,
         dayMaxEvents: true,
+        customButtons: {
+            goToday: {
+                text: "today",
+                hint: "Go to today",
+                click: () => {
+                    cal.today();
+                },
+            },
+        },
 
         headerToolbar: !isNarrow
             ? {
-                  left: "prev,next today",
+                  left: "prev,next goToday",
                   center: "title",
                   right: "dayGridMonth,timeGridWeek,timeGridDay,listWeek",
               }
             : !isMobile
             ? {
-                  right: "today,prev,next",
+                  right: "goToday,prev,next",
                   left: "timeGrid3Days,timeGridDay,listWeek",
               }
             : false,
         footerToolbar: isMobile
             ? {
-                  right: "today,prev,next",
+                  right: "goToday,prev,next",
                   left: "timeGrid3Days,timeGridDay,listWeek",
               }
             : false,

@@ -1,5 +1,7 @@
 # Full Calendar Plugin
 
+> **Fork note:** This is [alaning0/obsidian-full-calendar](https://github.com/alaning0/obsidian-full-calendar), forked from [obsidian-community/obsidian-full-calendar](https://github.com/obsidian-community/obsidian-full-calendar). It keeps the same plugin id (`obsidian-full-calendar`) so it can override a Community Plugin install. Upstream is tracked as the `upstream` remote.
+
 ![Obsidian Downloads](https://img.shields.io/badge/dynamic/json?logo=obsidian&color=%23483699&label=downloads&query=%24%5B%22obsidian-full-calendar%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json)
 
 Keep your calendar in your vault! This plugin integrates the [FullCalendar](https://github.com/fullcalendar/fullcalendar) library into your Obsidian Vault so that you can keep your ever-changing daily schedule and special events and plans alongside your tasks and notes, and link freely between all of them. Each event is stored as a separate note with special frontmatter so you can take notes, form connections and add context to any event on your calendar.
@@ -20,4 +22,12 @@ Full Calendar is available from the Obsidian Community Plugins list -- just sear
 
 ### Manual Installation
 
-You can also head over to the [releases page](https://github.com/obsidian-community/obsidian-full-calendar/releases) and unzip the latest release inside of the `.obsidian/plugins` directory inside your vault.
+Build from this fork (`npm run build`), then copy `main.js`, `manifest.json`, and `styles.css` (rename `main.css` → `styles.css`) into `.obsidian/plugins/obsidian-full-calendar` in your vault.
+
+Upstream releases are also available from the [community releases page](https://github.com/obsidian-community/obsidian-full-calendar/releases).
+
+### Local changes in this fork
+
+- Today button stays enabled in week/month views
+- Today highlight recovers correctly after sleep / overnight
+- Stronger today background color (`#4a4a4a`)
