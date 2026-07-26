@@ -16,6 +16,7 @@ import listPlugin from "@fullcalendar/list";
 import interactionPlugin from "@fullcalendar/interaction";
 import googleCalendarPlugin from "@fullcalendar/google-calendar";
 import iCalendarPlugin from "@fullcalendar/icalendar";
+import { createSeasonsViewPlugin } from "./seasonsView";
 
 // There is an issue with FullCalendar RRule support around DST boundaries which is fixed by this monkeypatch:
 // https://github.com/fullcalendar/fullcalendar/issues/5273#issuecomment-1360459342
@@ -512,6 +513,7 @@ export function renderCalendar(
             dayGridPlugin,
             timeGridPlugin,
             listPlugin,
+            createSeasonsViewPlugin({ openWeeklyNote }),
             // Drag + drop and editing
             interactionPlugin,
             // Remote sources
@@ -521,6 +523,11 @@ export function renderCalendar(
         ],
         googleCalendarApiKey: "AIzaSyDIiklFwJXaLWuT_4y6I9ZRVVsPuf4xGrk",
         initialView,
+        // ofcSeasons uses a year duration; without this, FC's locale maps the
+        // button to "year" via the duration unit instead of "Seasons".
+        buttonText: {
+            ofcSeasons: "seasons",
+        },
         nowIndicator: true,
         scrollTimeReset: false,
         dayMaxEvents: true,
@@ -544,7 +551,7 @@ export function renderCalendar(
             ? {
                   left: "prev,next goToday",
                   center: "title",
-                  right: "dayGridYear,dayGridMonth,timeGridWeek,timeGridDay,listWeek",
+                  right: "ofcSeasons,dayGridYear,dayGridMonth,timeGridWeek,timeGridDay,listWeek",
               }
             : !isMobile
             ? {

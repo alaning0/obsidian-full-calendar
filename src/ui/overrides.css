@@ -117,6 +117,145 @@
 	cursor: pointer;
 }
 
+/* Seasons overview page: month grid + week tracker. */
+.ofc-seasons-page {
+	display: flex;
+	flex-direction: column;
+	gap: 1.5rem;
+	padding: 1.25rem 1.5rem 2rem;
+	max-width: 32rem;
+	margin: 0 auto;
+}
+
+/* Seasons overview: Southern Hemisphere months in a label + 3-column grid. */
+.ofc-seasons {
+	display: grid;
+	grid-template-columns: 5.5rem repeat(3, minmax(4.5rem, 1fr));
+	gap: 0.65rem 0.75rem;
+	align-items: stretch;
+}
+.ofc-seasons-label {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	font-size: 0.85em;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+	color: var(--text-muted);
+	padding-right: 0.25rem;
+}
+.ofc-seasons-month {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.25rem;
+	min-height: 2.75rem;
+	padding: 0.5rem 0.4rem;
+	border-radius: var(--radius-s);
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	color: var(--text-normal);
+	font-size: 0.95em;
+	font-weight: 500;
+	text-align: center;
+}
+.ofc-seasons-month.is-empty {
+	visibility: hidden;
+	border: none;
+	background: transparent;
+	min-height: 0;
+	padding: 0;
+}
+.ofc-seasons-month.is-current {
+	background: var(--interactive-accent);
+	border-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+	font-weight: 600;
+}
+.ofc-seasons-star {
+	font-size: 0.85em;
+	line-height: 1;
+}
+.ofc-seasons-month-year {
+	font-size: 0.7em;
+	opacity: 0.75;
+	font-weight: 500;
+}
+
+.ofc-seasons-week-tracker {
+	display: flex;
+	flex-direction: column;
+	gap: 0.65rem;
+}
+.ofc-seasons-week-summary {
+	font-size: 0.85em;
+	font-weight: 500;
+	color: var(--text-muted);
+}
+.ofc-seasons-weeks {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(2.35rem, 1fr));
+	gap: 0.35rem;
+}
+.ofc-seasons-week {
+	appearance: none;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 1.85rem;
+	padding: 0.2rem 0.15rem;
+	border-radius: var(--radius-s);
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	color: var(--text-normal);
+	font-size: 0.7em;
+	font-weight: 600;
+	font-family: inherit;
+	line-height: 1;
+	box-shadow: none;
+}
+.ofc-seasons-week.is-past {
+	opacity: 0.45;
+	color: var(--text-muted);
+}
+.ofc-seasons-week.is-current {
+	background: var(--interactive-accent);
+	border-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+	opacity: 1;
+}
+.ofc-seasons-week.is-clickable {
+	cursor: pointer;
+}
+.ofc-seasons-week.is-clickable:hover {
+	border-color: var(--interactive-accent);
+}
+.ofc-seasons-week.is-clickable.is-current:hover {
+	filter: brightness(1.05);
+}
+.ofc-seasons-week:disabled {
+	cursor: default;
+	opacity: 0.7;
+}
+
+@media (max-width: 500px) {
+	.ofc-seasons-page {
+		padding: 1rem;
+		max-width: none;
+	}
+	.ofc-seasons {
+		grid-template-columns: 4.25rem repeat(3, minmax(0, 1fr));
+		gap: 0.45rem;
+	}
+	.ofc-seasons-month {
+		min-height: 2.4rem;
+		font-size: 0.85em;
+	}
+	.ofc-seasons-weeks {
+		grid-template-columns: repeat(auto-fill, minmax(2.1rem, 1fr));
+	}
+}
+
 .fc-button-active {
 	color: var(--text-on-accent) !important;
 }
