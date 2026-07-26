@@ -58,6 +58,7 @@ const WEEKDAYS = [
 
 const INITIAL_VIEW_OPTIONS = {
     DESKTOP: {
+        dayGridYear: "Year",
         timeGridDay: "Day",
         timeGridWeek: "Week",
         dayGridMonth: "Month",

@@ -73,6 +73,195 @@ NowTimerProto.setTimeout = function () {
     }, waitMs);
 };
 
+/** Find the nearest ancestor that can scroll vertically. */
+function getScrollableParent(el: HTMLElement): HTMLElement | null {
+    let node: HTMLElement | null = el.parentElement;
+    let fallback: HTMLElement | null = null;
+    while (node && node !== document.body) {
+        const style = window.getComputedStyle(node);
+        const overflowY = style.overflowY;
+        if (
+            overflowY === "auto" ||
+            overflowY === "scroll" ||
+            overflowY === "overlay"
+        ) {
+            if (node.scrollHeight > node.clientHeight + 1) {
+                return node;
+            }
+            if (!fallback) {
+                fallback = node;
+            }
+        }
+        node = node.parentElement;
+    }
+    return fallback;
+}
+
+function localDateISO(date: Date): string {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+}
+
+/**
+ * Resolve the year-view root. FC names the class from viewSpec.type
+ * (`fc-dayGridYear-view`). Also accept ofc tag / legacy selectors.
+ */
+function getYearViewEl(
+    calEl: HTMLElement,
+    fallback?: HTMLElement | null
+): HTMLElement | null {
+    return (
+        (calEl.querySelector(".fc-dayGridYear-view") as HTMLElement | null) ||
+        (calEl.querySelector(".ofc-year-overview") as HTMLElement | null) ||
+        (calEl.querySelector(".fc-dayGrid-view") as HTMLElement | null) ||
+        fallback ||
+        null
+    );
+}
+
+function setYearMode(calEl: HTMLElement, enabled: boolean) {
+    calEl.classList.toggle("ofc-year-mode", enabled);
+}
+
+/** Scroll the year overview so today is in view. Retries while layout settles. */
+function scrollYearViewToToday(rootEl: HTMLElement) {
+    const run = (): boolean => {
+        const todayStr = localDateISO(new Date());
+        const scope = (rootEl.closest(".fc") as HTMLElement | null) || rootEl;
+        const todayEl =
+            (rootEl.querySelector(
+                `.fc-daygrid-day[data-date="${todayStr}"]`
+            ) as HTMLElement | null) ||
+            (rootEl.querySelector(".fc-day-today") as HTMLElement | null) ||
+            (scope.querySelector(
+                `.fc-daygrid-day[data-date="${todayStr}"]`
+            ) as HTMLElement | null) ||
+            (scope.querySelector(".fc-day-today") as HTMLElement | null);
+        if (!todayEl) {
+            return false;
+        }
+
+        todayEl.scrollIntoView({
+            block: "center",
+            inline: "nearest",
+            behavior: "auto",
+        });
+
+        const scroller = getScrollableParent(todayEl);
+        if (scroller) {
+            const offset =
+                todayEl.getBoundingClientRect().top -
+                scroller.getBoundingClientRect().top +
+                scroller.scrollTop -
+                scroller.clientHeight / 3;
+            scroller.scrollTop = Math.max(0, offset);
+        }
+        return true;
+    };
+
+    // Headers + contentHeight:auto layout take a few frames to settle.
+    [0, 50, 150, 300, 600, 1000, 2000].forEach((ms) => {
+        window.setTimeout(() => {
+            run();
+        }, ms);
+    });
+}
+
+/** Insert a sticky month banner above the week that contains the 1st. */
+function ensureMonthHeaderForDay(
+    dayEl: HTMLElement,
+    formatDate: (date: Date, options: { month: string; year: string }) => string
+) {
+    const dateStr = dayEl.getAttribute("data-date");
+    if (!dateStr || !dateStr.endsWith("-01")) {
+        return;
+    }
+    const row = dayEl.closest("tr");
+    const parent = row?.parentElement;
+    if (
+        !row ||
+        !parent ||
+        row.previousElementSibling?.classList.contains("ofc-year-month-row")
+    ) {
+        return;
+    }
+    const [y, m] = dateStr.split("-").map(Number);
+    const date = new Date(y, m - 1, 1);
+    const monthRow = document.createElement("tr");
+    monthRow.className = "ofc-year-month-row";
+    const cell = document.createElement("td");
+    // dayGrid week numbers sit inside the first day cell (not an extra <td>).
+    cell.colSpan = row.children.length || 7;
+    cell.className = "ofc-year-month-header";
+    cell.textContent = formatDate(date, {
+        month: "long",
+        year: "numeric",
+    });
+    monthRow.appendChild(cell);
+    parent.insertBefore(monthRow, row);
+}
+
+/** Insert sticky month banners into the year overview only. */
+function injectYearMonthHeaders(
+    rootEl: HTMLElement,
+    formatDate: (date: Date, options: { month: string; year: string }) => string
+) {
+    rootEl.classList.add("ofc-year-overview");
+    rootEl.querySelectorAll(".ofc-year-month-row").forEach((el) => el.remove());
+
+    rootEl
+        .querySelectorAll('.fc-daygrid-day[data-date$="-01"]')
+        .forEach((dayEl) => {
+            ensureMonthHeaderForDay(dayEl as HTMLElement, formatDate);
+        });
+}
+
+function clearYearMonthHeaders(rootEl: HTMLElement) {
+    setYearMode(rootEl, false);
+    rootEl.classList.remove("ofc-year-overview");
+    rootEl
+        .querySelectorAll(".ofc-year-overview")
+        .forEach((el) => el.classList.remove("ofc-year-overview"));
+    rootEl.querySelectorAll(".ofc-year-month-row").forEach((el) => el.remove());
+}
+
+/** Paint year chrome (headers + scroll) with retries after FC redraws. */
+function paintYearOverview(
+    calEl: HTMLElement,
+    formatDate: (
+        date: Date,
+        options: { month: string; year: string }
+    ) => string,
+    fallbackViewEl?: HTMLElement | null
+) {
+    setYearMode(calEl, true);
+    const inject = () => {
+        const viewEl = getYearViewEl(calEl, fallbackViewEl);
+        if (!viewEl) {
+            return null;
+        }
+        injectYearMonthHeaders(viewEl, formatDate);
+        return viewEl;
+    };
+    const first = inject();
+    if (first) {
+        scrollYearViewToToday(first);
+    }
+    window.requestAnimationFrame(() => {
+        inject();
+        [0, 50, 150, 300, 600, 1000].forEach((ms) => {
+            window.setTimeout(() => {
+                const viewEl = inject();
+                if (viewEl && (ms === 300 || ms === 1000)) {
+                    scrollYearViewToToday(viewEl);
+                }
+            }, ms);
+        });
+    });
+}
+
 interface ExtraRenderProps {
     eventClick?: (info: EventClickArg) => void;
     select?: (
@@ -172,7 +361,7 @@ export function renderCalendar(
             ? {
                   left: "prev,next goToday",
                   center: "title",
-                  right: "dayGridMonth,timeGridWeek,timeGridDay,listWeek",
+                  right: "dayGridYear,dayGridMonth,timeGridWeek,timeGridDay,listWeek",
               }
             : !isMobile
             ? {
@@ -188,6 +377,19 @@ export function renderCalendar(
             : false,
 
         views: {
+            dayGridYear: {
+                type: "dayGrid",
+                duration: { years: 1 },
+                dateAlignment: "year",
+                buttonText: "year",
+                titleFormat: { year: "numeric" },
+                // Let the year grow naturally so the Obsidian pane scrolls
+                // (default expandRows squashes ~52 weeks into the viewport).
+                contentHeight: "auto",
+                // Dense “big picture” year: dots/short titles, limited per day.
+                dayMaxEvents: 3,
+                eventDisplay: "list-item",
+            },
             timeGridDay: {
                 type: "timeGrid",
                 duration: { days: 1 },
@@ -236,6 +438,18 @@ export function renderCalendar(
         eventMouseEnter,
 
         dayCellDidMount: (info) => {
+            // Re-inject on each cell mount so FC event redraws don't wipe banners.
+            if (info.view.type === "dayGridYear") {
+                const viewRoot =
+                    (info.el.closest(".fc-view") as HTMLElement | null) ||
+                    getYearViewEl(cal.el);
+                viewRoot?.classList.add("ofc-year-overview");
+                setYearMode(cal.el, true);
+                ensureMonthHeaderForDay(info.el, (date, options) =>
+                    info.view.calendar.formatDate(date, options)
+                );
+            }
+
             if (!openDailyNote) {
                 return;
             }
@@ -254,6 +468,33 @@ export function renderCalendar(
                 e.stopPropagation();
                 void openDailyNote(info.date);
             });
+        },
+
+        viewDidMount: (info) => {
+            // Always clear from the whole calendar; month view must never keep these.
+            clearYearMonthHeaders(cal.el);
+
+            if (info.view.type !== "dayGridYear") {
+                return;
+            }
+
+            const fallback =
+                (info.el.closest(".fc-view") as HTMLElement | null) || info.el;
+            paintYearOverview(
+                cal.el,
+                (date, options) => info.view.calendar.formatDate(date, options),
+                fallback
+            );
+        },
+
+        datesSet: (info) => {
+            if (info.view.type !== "dayGridYear") {
+                clearYearMonthHeaders(cal.el);
+                return;
+            }
+            paintYearOverview(cal.el, (date, options) =>
+                info.view.calendar.formatDate(date, options)
+            );
         },
 
         eventDidMount: ({ event, el, textColor }) => {

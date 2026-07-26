@@ -46,6 +46,66 @@
 	cursor: pointer;
 }
 
+/* Year overview: grow with content so the Obsidian pane scrolls (not FC expandRows). */
+.fc.ofc-year-mode {
+	height: auto !important;
+	min-height: 100%;
+}
+.fc.ofc-year-mode .fc-view-harness,
+.fc.ofc-year-mode .fc-view-harness-active {
+	height: auto !important;
+	max-height: none !important;
+}
+.fc.ofc-year-mode .fc-scroller,
+.fc.ofc-year-mode .fc-scroller-liquid,
+.fc.ofc-year-mode .fc-scroller-liquid-absolute {
+	overflow: visible !important;
+	height: auto !important;
+	position: relative !important;
+}
+.fc.ofc-year-mode .fc-daygrid-body,
+.fc.ofc-year-mode .fc-scrollgrid-sync-table {
+	height: auto !important;
+}
+
+/* Compact year overview: scroll the whole calendar year as one tall grid.
+   View class is fc-dayGridYear-view; we also tag with ofc-year-overview. */
+.ofc-year-overview .fc-daygrid-day-frame {
+	min-height: 2.75em;
+}
+.ofc-year-overview .fc-daygrid-day-number {
+	font-size: 0.75em;
+	padding: 2px 4px;
+}
+.ofc-year-overview .fc-daygrid-event {
+	font-size: 0.7em;
+	margin-top: 1px;
+}
+.ofc-year-overview .fc-daygrid-dot-event {
+	padding: 1px 2px;
+}
+.ofc-year-overview .fc-daygrid-more-link {
+	font-size: 0.7em;
+}
+.ofc-year-overview .fc-daygrid-week-number {
+	font-size: 0.65em;
+	min-width: 1.35em;
+	padding: 1px 2px;
+}
+.ofc-year-overview .ofc-year-month-row .ofc-year-month-header {
+	position: sticky;
+	top: 0;
+	z-index: 4;
+	padding: 0.45em 0.65em;
+	font-weight: 600;
+	font-size: 0.95em;
+	letter-spacing: 0.01em;
+	text-align: left;
+	color: var(--text-normal);
+	background: var(--background-primary);
+	border-bottom: 1px solid var(--background-modifier-border);
+	box-shadow: 0 1px 0 var(--background-modifier-border);
+}
 .fc-button-active {
 	color: var(--text-on-accent) !important;
 }
