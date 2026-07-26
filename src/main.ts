@@ -73,9 +73,10 @@ export default class FullCalendarPlugin extends Plugin {
                 active: true,
             });
         } else {
-            await Promise.all(
-                leaves.map((l) => (l.view as CalendarView).onOpen())
-            );
+            const leaf = leaves[0];
+            this.app.workspace.revealLeaf(leaf);
+            this.app.workspace.setActiveLeaf(leaf, { focus: true });
+            await (leaf.view as CalendarView).onOpen();
         }
     }
     async onload() {

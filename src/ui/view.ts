@@ -10,7 +10,7 @@ import {
     toEventInput,
 } from "./interop";
 import { renderOnboarding } from "./onboard";
-import { openFileForEvent } from "./actions";
+import { openFileForEvent, openDailyNoteForDate } from "./actions";
 import { launchCreateModal, launchEditModal } from "./event_modal";
 import { isTask, toggleTask, unmakeTask } from "src/ui/tasks";
 import { UpdateViewCallback } from "src/core/EventCache";
@@ -223,6 +223,16 @@ export class CalendarView extends ItemView {
                         });
                     }
                 } catch (e) {}
+            },
+            openDailyNote: async (date) => {
+                try {
+                    await openDailyNoteForDate(this.app, date);
+                } catch (e) {
+                    if (e instanceof Error) {
+                        console.error(e);
+                        new Notice(e.message);
+                    }
+                }
             },
             firstDay: this.plugin.settings.firstDay,
             initialView: this.plugin.settings.initialView,

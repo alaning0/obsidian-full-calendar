@@ -9,6 +9,9 @@ Obsidian calendar plugin based on [FullCalendar](https://github.com/fullcalendar
 - Today button stays enabled in week/month views
 - Today highlight recovers correctly after sleep / overnight
 - Configurable today background color (Settings → Full Calendar; default `#4a4a4a`)
+- Local calendars load notes in nested subfolders (e.g. `Year/2026-07/...`)
+- Click a **day number** to open that day's Daily/Periodic Notes note (creates it if needed); click the **rest of the cell** to create an event
+- Ribbon / open actions focus an existing calendar or day-note tab when it is already open but unfocused
 
 ## Installation
 
@@ -43,8 +46,6 @@ Push a version tag to trigger [.github/workflows/release.yml](.github/workflows/
 npm version patch   # bumps package.json + manifest via the version script
 git push origin HEAD --tags
 ```
-
-Or tag manually: `git tag 0.10.9 && git push origin 0.10.9`.
 
 ## License
 

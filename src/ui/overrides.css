@@ -42,6 +42,10 @@
 	text-decoration-line: none;
 }
 
+.fc .fc-daygrid-day-number {
+	cursor: pointer;
+}
+
 .fc-button-active {
 	color: var(--text-on-accent) !important;
 }

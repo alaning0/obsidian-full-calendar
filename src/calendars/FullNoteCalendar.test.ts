@@ -158,7 +158,42 @@ describe("Note Calendar Tests", () => {
             }
         }
     );
-    it.todo("Recursive folder settings");
+    it("loads events from nested subfolders", async () => {
+        const obsidian = makeApp(
+            MockAppBuilder.make()
+                .folder(
+                    new MockAppBuilder(dirName)
+                        .file(
+                            "2022-01-01 Top Level.md",
+                            new FileBuilder().frontmatter({
+                                title: "Top Level",
+                                allDay: true,
+                                date: "2022-01-01",
+                            })
+                        )
+                        .folder(
+                            new MockAppBuilder("2022-01").file(
+                                "2022-01-10 Nested.md",
+                                new FileBuilder().frontmatter({
+                                    title: "Nested",
+                                    allDay: true,
+                                    date: "2022-01-10",
+                                })
+                            )
+                        )
+                )
+                .done()
+        );
+        const calendar = new FullNoteCalendar(obsidian, color, dirName);
+        const res = await calendar.getEvents();
+        expect(res.map(([event, loc]) => [event.title, loc.file.path])).toEqual(
+            expect.arrayContaining([
+                ["Top Level", `${dirName}/2022-01-01 Top Level.md`],
+                ["Nested", `${dirName}/2022-01/2022-01-10 Nested.md`],
+            ])
+        );
+        expect(res.length).toBe(2);
+    });
 
     it("creates an event", async () => {
         const obsidian = makeApp(MockAppBuilder.make().done());

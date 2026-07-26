@@ -92,6 +92,8 @@ interface ExtraRenderProps {
     ) => Promise<void>;
     toggleTask?: (event: EventApi, isComplete: boolean) => Promise<boolean>;
     forceNarrow?: boolean;
+    /** Open the daily/periodic note for this calendar day (day-number clicks). */
+    openDailyNote?: (date: Date) => Promise<void>;
 }
 
 export function renderCalendar(
@@ -108,6 +110,7 @@ export function renderCalendar(
         eventMouseEnter,
         openContextMenuForEvent,
         toggleTask,
+        openDailyNote,
     } = settings || {};
     const modifyEventCallback =
         modifyEvent &&
@@ -221,6 +224,27 @@ export function renderCalendar(
         eventResize: modifyEventCallback,
 
         eventMouseEnter,
+
+        dayCellDidMount: (info) => {
+            if (!openDailyNote) {
+                return;
+            }
+            const dayNumberEl = info.el.querySelector(
+                ".fc-daygrid-day-number"
+            ) as HTMLElement | null;
+            if (!dayNumberEl) {
+                return;
+            }
+            // Stop selection/create-event when interacting with the day number.
+            dayNumberEl.addEventListener("mousedown", (e) => {
+                e.stopPropagation();
+            });
+            dayNumberEl.addEventListener("click", (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                void openDailyNote(info.date);
+            });
+        },
 
         eventDidMount: ({ event, el, textColor }) => {
             el.addEventListener("contextmenu", (e) => {

@@ -205,14 +205,7 @@ export default class FullNoteCalendar extends EditableCalendar {
         if (!(eventFolder instanceof TFolder)) {
             throw new Error(`${eventFolder} is not a directory.`);
         }
-        const events: EditableEventResponse[] = [];
-        for (const file of eventFolder.children) {
-            if (file instanceof TFile) {
-                const results = await this.getEventsInFile(file);
-                events.push(...results);
-            }
-        }
-        return events;
+        return await this.getEventsInFolderRecursive(eventFolder);
     }
 
     async createEvent(event: OFCEvent): Promise<EventLocation> {
