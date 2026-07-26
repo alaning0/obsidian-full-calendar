@@ -18,6 +18,19 @@ import { UpdateViewCallback } from "src/core/EventCache";
 export const FULL_CALENDAR_VIEW_TYPE = "full-calendar-view";
 export const FULL_CALENDAR_SIDEBAR_VIEW_TYPE = "full-calendar-sidebar-view";
 
+/** Apply or clear FullCalendar's today highlight CSS variable on a container. */
+export function applyTodayBackground(
+    el: HTMLElement,
+    color: string | undefined
+) {
+    const trimmed = color?.trim();
+    if (trimmed) {
+        el.style.setProperty("--fc-today-bg-color", trimmed);
+    } else {
+        el.style.removeProperty("--fc-today-bg-color");
+    }
+}
+
 function getCalendarColors(color: string | null | undefined): {
     color: string;
     textColor: string;
@@ -106,6 +119,10 @@ export class CalendarView extends ItemView {
         const container = this.containerEl.children[1];
         container.empty();
         let calendarEl = container.createEl("div");
+        applyTodayBackground(
+            calendarEl,
+            this.plugin.settings.todayBackgroundColor
+        );
 
         if (
             this.plugin.settings.calendarSources.filter(

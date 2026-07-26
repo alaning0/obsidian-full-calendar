@@ -27,6 +27,8 @@ export interface FullCalendarSettings {
     };
     timeFormat24h: boolean;
     clickToCreateEventFromMonthView: boolean;
+    /** Hex color for FullCalendar's today highlight. Empty = theme default. */
+    todayBackgroundColor: string;
 }
 
 export const DEFAULT_SETTINGS: FullCalendarSettings = {
@@ -39,6 +41,7 @@ export const DEFAULT_SETTINGS: FullCalendarSettings = {
     },
     timeFormat24h: false,
     clickToCreateEventFromMonthView: true,
+    todayBackgroundColor: "#4a4a4a",
 };
 
 const WEEKDAYS = [
@@ -244,6 +247,31 @@ export class FullCalendarSettingTab extends PluginSettingTab {
                     this.plugin.settings.clickToCreateEventFromMonthView = val;
                     await this.plugin.saveSettings();
                 });
+            });
+
+        new Setting(containerEl)
+            .setName("Today background color")
+            .setDesc(
+                "Highlight color for the current day. Clear the text field to use the theme default."
+            )
+            .addColorPicker((picker) => {
+                const current =
+                    this.plugin.settings.todayBackgroundColor || "#4a4a4a";
+                picker.setValue(current);
+                picker.onChange(async (val) => {
+                    this.plugin.settings.todayBackgroundColor = val;
+                    await this.plugin.saveSettings();
+                    this.display();
+                });
+            })
+            .addText((text) => {
+                text.setPlaceholder("theme default")
+                    .setValue(this.plugin.settings.todayBackgroundColor)
+                    .onChange(async (val) => {
+                        this.plugin.settings.todayBackgroundColor = val.trim();
+                        await this.plugin.saveSettings();
+                        this.display();
+                    });
             });
 
         containerEl.createEl("h2", { text: "Manage Calendars" });

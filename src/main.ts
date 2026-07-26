@@ -3,6 +3,7 @@ import {
     CalendarView,
     FULL_CALENDAR_SIDEBAR_VIEW_TYPE,
     FULL_CALENDAR_VIEW_TYPE,
+    applyTodayBackground,
 } from "./ui/view";
 import { renderCalendar } from "./ui/calendar";
 import { toEventInput } from "./ui/interop";
@@ -208,5 +209,25 @@ export default class FullCalendarPlugin extends Plugin {
         this.cache.reset(this.settings.calendarSources);
         await this.cache.populate();
         this.cache.resync();
+        this.applyTodayBackgroundToOpenViews();
+    }
+
+    applyTodayBackgroundToOpenViews() {
+        const color = this.settings.todayBackgroundColor;
+        for (const type of [
+            FULL_CALENDAR_VIEW_TYPE,
+            FULL_CALENDAR_SIDEBAR_VIEW_TYPE,
+        ]) {
+            for (const leaf of this.app.workspace.getLeavesOfType(type)) {
+                const container = (leaf.view as CalendarView).containerEl
+                    .children[1] as HTMLElement | undefined;
+                const calendarRoot = container?.querySelector(
+                    ":scope > div"
+                ) as HTMLElement | null;
+                if (calendarRoot) {
+                    applyTodayBackground(calendarRoot, color);
+                }
+            }
+        }
     }
 }
