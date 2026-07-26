@@ -125,9 +125,151 @@ function setYearMode(calEl: HTMLElement, enabled: boolean) {
     calEl.classList.toggle("ofc-year-mode", enabled);
 }
 
-/** Scroll the year overview so today is in view. Retries while layout settles. */
-function scrollYearViewToToday(rootEl: HTMLElement) {
+/** One-shot year-view scroll-to-today; must not fight later user scroll. */
+const YEAR_SCROLL_SETTLE_MS = [0, 50, 150, 300] as const;
+
+type YearScrollState = {
+    sessionKey: string | null;
+    completed: boolean;
+    force: boolean;
+    timers: number[];
+    scroller: HTMLElement | null;
+    onUserScroll: (() => void) | null;
+    ignoringProgrammaticScroll: boolean;
+};
+
+const yearScroll: YearScrollState = {
+    sessionKey: null,
+    completed: false,
+    force: false,
+    timers: [],
+    scroller: null,
+    onUserScroll: null,
+    ignoringProgrammaticScroll: false,
+};
+
+function clearYearScrollTimers() {
+    for (const id of yearScroll.timers) {
+        window.clearTimeout(id);
+    }
+    yearScroll.timers = [];
+}
+
+function detachYearScrollUserListener() {
+    if (yearScroll.scroller && yearScroll.onUserScroll) {
+        yearScroll.scroller.removeEventListener(
+            "scroll",
+            yearScroll.onUserScroll
+        );
+    }
+    yearScroll.scroller = null;
+    yearScroll.onUserScroll = null;
+}
+
+function resetYearScrollSession() {
+    clearYearScrollTimers();
+    detachYearScrollUserListener();
+    yearScroll.sessionKey = null;
+    yearScroll.completed = false;
+    yearScroll.force = false;
+    yearScroll.ignoringProgrammaticScroll = false;
+}
+
+function getViewedYearKey(rootEl: HTMLElement): string | null {
+    const jan1 = rootEl.querySelector(
+        '.fc-daygrid-day[data-date$="-01-01"]'
+    ) as HTMLElement | null;
+    const firstDay =
+        jan1 ||
+        (rootEl.querySelector(
+            ".fc-daygrid-day[data-date]"
+        ) as HTMLElement | null);
+    const date = firstDay?.getAttribute("data-date");
+    return date ? date.slice(0, 4) : null;
+}
+
+function yearViewIncludesToday(rootEl: HTMLElement): boolean {
+    const todayStr = localDateISO(new Date());
+    const scope = (rootEl.closest(".fc") as HTMLElement | null) || rootEl;
+    return !!(
+        rootEl.querySelector(`.fc-daygrid-day[data-date="${todayStr}"]`) ||
+        rootEl.querySelector(".fc-day-today") ||
+        scope.querySelector(`.fc-daygrid-day[data-date="${todayStr}"]`) ||
+        scope.querySelector(".fc-day-today")
+    );
+}
+
+function attachYearScrollUserCancel(scroller: HTMLElement) {
+    if (yearScroll.scroller === scroller && yearScroll.onUserScroll) {
+        return;
+    }
+    detachYearScrollUserListener();
+    yearScroll.scroller = scroller;
+    yearScroll.onUserScroll = () => {
+        if (yearScroll.ignoringProgrammaticScroll) {
+            return;
+        }
+        // User took over — stop any remaining settle retries.
+        clearYearScrollTimers();
+        yearScroll.completed = true;
+        yearScroll.force = false;
+        detachYearScrollUserListener();
+    };
+    scroller.addEventListener("scroll", yearScroll.onUserScroll, {
+        passive: true,
+    });
+}
+
+/**
+ * Scroll the year overview so today is in view — once per year session.
+ * Brief settle retries only; cancelled on user scroll. Pass `{ force: true }`
+ * for the today button or when re-entering a year that should scroll again.
+ */
+function scrollYearViewToToday(
+    rootEl: HTMLElement,
+    opts?: { force?: boolean }
+) {
+    if (opts?.force) {
+        yearScroll.force = true;
+        yearScroll.completed = false;
+    }
+
+    const sessionKey = getViewedYearKey(rootEl);
+    if (!sessionKey) {
+        return;
+    }
+
+    if (yearScroll.sessionKey !== sessionKey) {
+        clearYearScrollTimers();
+        detachYearScrollUserListener();
+        yearScroll.sessionKey = sessionKey;
+        yearScroll.completed = false;
+    }
+
+    if (yearScroll.completed && !yearScroll.force) {
+        return;
+    }
+
+    if (!yearViewIncludesToday(rootEl)) {
+        // Different year with no "today" cell — nothing to scroll to.
+        yearScroll.completed = true;
+        yearScroll.force = false;
+        clearYearScrollTimers();
+        return;
+    }
+
+    // Already settling for this session; don't stack more timers from redraws.
+    if (yearScroll.timers.length > 0 && !opts?.force) {
+        return;
+    }
+
+    clearYearScrollTimers();
+
     const run = (): boolean => {
+        if (yearScroll.completed && !yearScroll.force) {
+            return true;
+        }
+
         const todayStr = localDateISO(new Date());
         const scope = (rootEl.closest(".fc") as HTMLElement | null) || rootEl;
         const todayEl =
@@ -143,6 +285,7 @@ function scrollYearViewToToday(rootEl: HTMLElement) {
             return false;
         }
 
+        yearScroll.ignoringProgrammaticScroll = true;
         todayEl.scrollIntoView({
             block: "center",
             inline: "nearest",
@@ -157,16 +300,47 @@ function scrollYearViewToToday(rootEl: HTMLElement) {
                 scroller.scrollTop -
                 scroller.clientHeight / 3;
             scroller.scrollTop = Math.max(0, offset);
+            attachYearScrollUserCancel(scroller);
         }
+
+        window.requestAnimationFrame(() => {
+            window.requestAnimationFrame(() => {
+                yearScroll.ignoringProgrammaticScroll = false;
+            });
+        });
         return true;
     };
 
-    // Headers + contentHeight:auto layout take a few frames to settle.
-    [0, 50, 150, 300, 600, 1000, 2000].forEach((ms) => {
-        window.setTimeout(() => {
-            run();
+    let succeeded = false;
+    for (const ms of YEAR_SCROLL_SETTLE_MS) {
+        const id = window.setTimeout(() => {
+            if (yearScroll.completed && !yearScroll.force) {
+                return;
+            }
+            // After first success, allow only the brief remaining settle window.
+            if (succeeded && ms > 150) {
+                yearScroll.completed = true;
+                yearScroll.force = false;
+                return;
+            }
+            if (run()) {
+                succeeded = true;
+                yearScroll.force = false;
+                if (ms >= 150) {
+                    yearScroll.completed = true;
+                }
+            }
         }, ms);
-    });
+        yearScroll.timers.push(id);
+    }
+
+    // Hard lock after settle window so redraws never re-arm scrolling.
+    const lockId = window.setTimeout(() => {
+        yearScroll.completed = true;
+        yearScroll.force = false;
+        yearScroll.timers = yearScroll.timers.filter((id) => id !== lockId);
+    }, 350);
+    yearScroll.timers.push(lockId);
 }
 
 /** Insert a sticky month banner above the week that contains the 1st. */
@@ -219,6 +393,7 @@ function injectYearMonthHeaders(
 }
 
 function clearYearMonthHeaders(rootEl: HTMLElement) {
+    resetYearScrollSession();
     setYearMode(rootEl, false);
     rootEl.classList.remove("ofc-year-overview");
     rootEl
@@ -227,7 +402,7 @@ function clearYearMonthHeaders(rootEl: HTMLElement) {
     rootEl.querySelectorAll(".ofc-year-month-row").forEach((el) => el.remove());
 }
 
-/** Paint year chrome (headers + scroll) with retries after FC redraws. */
+/** Paint year chrome (headers + one-shot scroll) after FC redraws. */
 function paintYearOverview(
     calEl: HTMLElement,
     formatDate: (
@@ -247,16 +422,15 @@ function paintYearOverview(
     };
     const first = inject();
     if (first) {
+        // No-ops after the initial scroll for this year session.
         scrollYearViewToToday(first);
     }
     window.requestAnimationFrame(() => {
         inject();
+        // Header reinject only — do not re-arm scroll on settle retries.
         [0, 50, 150, 300, 600, 1000].forEach((ms) => {
             window.setTimeout(() => {
-                const viewEl = inject();
-                if (viewEl && (ms === 300 || ms === 1000)) {
-                    scrollYearViewToToday(viewEl);
-                }
+                inject();
             }, ms);
         });
     });
@@ -356,6 +530,12 @@ export function renderCalendar(
                 hint: "Go to today",
                 click: () => {
                     cal.today();
+                    if (cal.view.type === "dayGridYear") {
+                        const viewEl = getYearViewEl(cal.el);
+                        if (viewEl) {
+                            scrollYearViewToToday(viewEl, { force: true });
+                        }
+                    }
                 },
             },
         },
