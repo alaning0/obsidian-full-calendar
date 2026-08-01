@@ -60,42 +60,49 @@ export function launchEditModal(plugin: FullCalendarPlugin, eventId: string) {
 
     const calIdx = calendars.findIndex(({ id }) => id === calId);
 
-    new ReactModal(plugin.app, async (closeModal) =>
-        React.createElement(EditEvent, {
-            initialEvent: eventToEdit,
-            calendars,
-            defaultCalendarIndex: calIdx,
-            submit: async (data, calendarIndex) => {
-                try {
-                    if (calendarIndex !== calIdx) {
-                        await plugin.cache.moveEventToCalendar(
-                            eventId,
-                            calendars[calendarIndex].id
-                        );
+    new ReactModal(
+        plugin.app,
+        async (closeModal) =>
+            React.createElement(EditEvent, {
+                initialEvent: eventToEdit,
+                calendars,
+                defaultCalendarIndex: calIdx,
+                submit: async (data, calendarIndex) => {
+                    try {
+                        if (calendarIndex !== calIdx) {
+                            await plugin.cache.moveEventToCalendar(
+                                eventId,
+                                calendars[calendarIndex].id
+                            );
+                        }
+                        await plugin.cache.updateEventWithId(eventId, data);
+                    } catch (e) {
+                        if (e instanceof Error) {
+                            new Notice(
+                                "Error when updating event: " + e.message
+                            );
+                            console.error(e);
+                        }
                     }
-                    await plugin.cache.updateEventWithId(eventId, data);
-                } catch (e) {
-                    if (e instanceof Error) {
-                        new Notice("Error when updating event: " + e.message);
-                        console.error(e);
-                    }
-                }
-                closeModal();
-            },
-            open: async () => {
-                openFileForEvent(plugin.cache, plugin.app, eventId);
-            },
-            deleteEvent: async () => {
-                try {
-                    await plugin.cache.deleteEvent(eventId);
                     closeModal();
-                } catch (e) {
-                    if (e instanceof Error) {
-                        new Notice("Error when deleting event: " + e.message);
-                        console.error(e);
+                },
+                open: async () => {
+                    openFileForEvent(plugin.cache, plugin.app, eventId);
+                },
+                deleteEvent: async () => {
+                    try {
+                        await plugin.cache.deleteEvent(eventId);
+                        closeModal();
+                    } catch (e) {
+                        if (e instanceof Error) {
+                            new Notice(
+                                "Error when deleting event: " + e.message
+                            );
+                            console.error(e);
+                        }
                     }
-                }
-            },
-        })
+                },
+            }),
+        { pinTop: true }
     ).open();
 }

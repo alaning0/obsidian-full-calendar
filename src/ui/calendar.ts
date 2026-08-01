@@ -456,6 +456,10 @@ interface ExtraRenderProps {
     ) => Promise<void>;
     toggleTask?: (event: EventApi, isComplete: boolean) => Promise<boolean>;
     forceNarrow?: boolean;
+    /** Force phone layout regardless of window width (dev toggle). */
+    forceMobile?: boolean;
+    /** Called when the toolbar mobile/desktop toggle is clicked. */
+    onToggleMobileLayout?: () => void;
     /** Open the daily/periodic note for this calendar day (day-number clicks). */
     openDailyNote?: (date: Date) => Promise<void>;
     /** Open the weekly periodic note for this week (week-number clicks). */
@@ -467,8 +471,8 @@ export function renderCalendar(
     eventSources: EventSourceInput[],
     settings?: ExtraRenderProps
 ): Calendar {
-    const isMobile = window.innerWidth < 500;
-    // Sidebar uses forceNarrow on desktop; real phones use width.
+    const isMobile = window.innerWidth < 500 || !!settings?.forceMobile;
+    // Sidebar uses forceNarrow on desktop; real phones / force-mobile use width path.
     const isSidebar = !!settings?.forceNarrow && !isMobile;
     const isNarrow = settings?.forceNarrow || isMobile;
     const {
@@ -480,6 +484,7 @@ export function renderCalendar(
         toggleTask,
         openDailyNote,
         openWeeklyNote,
+        onToggleMobileLayout,
     } = settings || {};
     const modifyEventCallback =
         modifyEvent &&
@@ -545,24 +550,33 @@ export function renderCalendar(
                     }
                 },
             },
+            toggleMobile: {
+                text: settings?.forceMobile ? "desktop" : "mobile",
+                hint: settings?.forceMobile
+                    ? "Switch to desktop layout"
+                    : "Force mobile layout (for development)",
+                click: () => {
+                    onToggleMobileLayout?.();
+                },
+            },
         },
 
         headerToolbar: !isNarrow
             ? {
-                  left: "prev,next goToday",
+                  left: "prev,next goToday toggleMobile",
                   center: "title",
                   right: "ofcSeasons,dayGridYear,dayGridMonth,timeGridWeek,timeGridDay,listWeek",
               }
             : !isMobile
             ? {
-                  right: "goToday,prev,next",
-                  left: "timeGridWeek,timeGrid3Days,timeGridDay,listWeek",
+                  right: "goToday,prev,next toggleMobile",
+                  left: "dayGridMonth,timeGridWeek,timeGrid3Days,timeGridDay,listMonth",
               }
             : false,
         footerToolbar: isMobile
             ? {
-                  right: "goToday,prev,next",
-                  left: "timeGridWeek,timeGrid3Days,timeGridDay,listWeek",
+                  right: "goToday,prev,next toggleMobile",
+                  left: "dayGridMonth,timeGridWeek,timeGrid3Days,timeGridDay,listMonth",
               }
             : false,
 
@@ -579,6 +593,15 @@ export function renderCalendar(
                 // Dense “big picture” year: dots/short titles, limited per day.
                 dayMaxEvents: 3,
                 eventDisplay: "list-item",
+            },
+            dayGridMonth: {
+                type: "dayGrid",
+                buttonText: isNarrow ? "m" : "month",
+            },
+            listMonth: {
+                type: "list",
+                duration: { months: 1 },
+                buttonText: "list",
             },
             timeGridDay: {
                 type: "timeGrid",
@@ -601,6 +624,24 @@ export function renderCalendar(
         weekNumbers: true,
         weekNumberCalculation: "ISO",
         weekText: "W",
+        // Force day/month (e.g. Mon 28/7) on timeGrid + list headers — not month/day.
+        dayHeaderContent: (arg) => {
+            const viewType = arg.view.type;
+            if (
+                viewType === "dayGridMonth" ||
+                viewType === "dayGridYear" ||
+                viewType === "ofcSeasons"
+            ) {
+                return arg.text;
+            }
+            const d = arg.date;
+            const longWeekday =
+                viewType === "timeGridDay" || viewType.startsWith("list");
+            const weekday = arg.view.calendar.formatDate(d, {
+                weekday: longWeekday ? "long" : "short",
+            });
+            return `${weekday} ${d.getDate()}/${d.getMonth() + 1}`;
+        },
         ...(settings?.timeFormat24h && {
             eventTimeFormat: {
                 hour: "numeric",
@@ -631,6 +672,42 @@ export function renderCalendar(
 
         eventMouseEnter,
 
+        dayHeaderDidMount: (info) => {
+            const viewType = info.view.type;
+            if (
+                !openDailyNote ||
+                viewType === "dayGridMonth" ||
+                viewType === "dayGridYear" ||
+                viewType === "ofcSeasons"
+            ) {
+                return;
+            }
+            info.el.classList.add("ofc-day-header-note");
+            info.el.addEventListener("mousedown", (e) => {
+                e.stopPropagation();
+            });
+            info.el.addEventListener("click", (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                void openDailyNote(info.date);
+            });
+        },
+
+        weekNumberDidMount: (info) => {
+            if (!openWeeklyNote) {
+                return;
+            }
+            info.el.classList.add("ofc-week-number-note");
+            info.el.addEventListener("mousedown", (e) => {
+                e.stopPropagation();
+            });
+            info.el.addEventListener("click", (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                void openWeeklyNote(info.date);
+            });
+        },
+
         dayCellDidMount: (info) => {
             // Re-inject on each cell mount so FC event redraws don't wipe banners.
             if (info.view.type === "dayGridYear") {
@@ -644,22 +721,7 @@ export function renderCalendar(
                 );
             }
 
-            // Week number sits on the first day cell of each row.
-            if (openWeeklyNote) {
-                const weekNumberEl = info.el.querySelector(
-                    ".fc-daygrid-week-number"
-                ) as HTMLElement | null;
-                if (weekNumberEl) {
-                    weekNumberEl.addEventListener("mousedown", (e) => {
-                        e.stopPropagation();
-                    });
-                    weekNumberEl.addEventListener("click", (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        void openWeeklyNote(info.date);
-                    });
-                }
-            }
+            // Week numbers: handled in weekNumberDidMount (dayGrid + timeGrid).
 
             if (!openDailyNote) {
                 return;

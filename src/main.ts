@@ -161,6 +161,16 @@ export default class FullCalendarPlugin extends Plugin {
         });
 
         this.addCommand({
+            id: "full-calendar-toggle-mobile-layout",
+            name: "Toggle mobile layout",
+            callback: async () => {
+                await this.setForceMobileLayout(
+                    !this.settings.forceMobileLayout
+                );
+            },
+        });
+
+        this.addCommand({
             id: "full-calendar-open",
             name: "Open Calendar",
             callback: () => {
@@ -214,6 +224,9 @@ export default class FullCalendarPlugin extends Plugin {
             this.settings.initialView.sidebar =
                 DEFAULT_SETTINGS.initialView.sidebar;
         }
+        if (this.settings.forceMobileLayout === undefined) {
+            this.settings.forceMobileLayout = false;
+        }
     }
 
     async saveSettings() {
@@ -223,6 +236,27 @@ export default class FullCalendarPlugin extends Plugin {
         await this.cache.populate();
         this.cache.resync();
         this.applyTodayBackgroundToOpenViews();
+    }
+
+    /** Persist and remount calendars with phone/desktop chrome (no cache reset). */
+    async setForceMobileLayout(enabled: boolean) {
+        this.settings.forceMobileLayout = enabled;
+        await this.saveData(this.settings);
+        new Notice(
+            enabled ? "Forced mobile layout on." : "Desktop layout restored."
+        );
+        await this.remountCalendarViews();
+    }
+
+    async remountCalendarViews() {
+        for (const type of [
+            FULL_CALENDAR_VIEW_TYPE,
+            FULL_CALENDAR_SIDEBAR_VIEW_TYPE,
+        ]) {
+            for (const leaf of this.app.workspace.getLeavesOfType(type)) {
+                await (leaf.view as CalendarView).onOpen();
+            }
+        }
     }
 
     applyTodayBackgroundToOpenViews() {

@@ -46,6 +46,18 @@
 	cursor: pointer;
 }
 
+/* TimeGrid / list day headers → daily note; week numbers → weekly note. */
+.fc .ofc-day-header-note,
+.fc .ofc-week-number-note,
+.fc .fc-timegrid-axis-cushion.ofc-week-number-note,
+.fc .fc-list-day-cushion.ofc-day-header-note {
+	cursor: pointer;
+}
+.fc .ofc-day-header-note:hover,
+.fc .ofc-week-number-note:hover {
+	color: var(--text-accent);
+}
+
 /* Year overview: grow with content so the Obsidian pane scrolls (not FC expandRows). */
 .fc.ofc-year-mode {
 	height: auto !important;
@@ -312,6 +324,17 @@
 	.ofc-seasons-quarters {
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
+}
+
+/* Pin edit dialog near the top so fields stay reachable on small screens. */
+.modal-container.ofc-modal-top-container {
+	align-items: flex-start;
+	padding-top: max(1.5rem, 6vh);
+}
+.modal.ofc-modal-top {
+	margin-top: 0;
+	max-height: calc(100vh - 3rem);
+	overflow: auto;
 }
 
 .fc-button-active {

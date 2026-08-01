@@ -145,6 +145,12 @@ export class CalendarView extends ItemView {
         }
         this.fullCalendarView = renderCalendar(calendarEl, sources, {
             forceNarrow: this.inSidebar,
+            forceMobile: this.plugin.settings.forceMobileLayout,
+            onToggleMobileLayout: () => {
+                void this.plugin.setForceMobileLayout(
+                    !this.plugin.settings.forceMobileLayout
+                );
+            },
             eventClick: async (info) => {
                 try {
                     if (

@@ -30,6 +30,11 @@ export interface FullCalendarSettings {
     clickToCreateEventFromMonthView: boolean;
     /** Hex color for FullCalendar's today highlight. Empty = theme default. */
     todayBackgroundColor: string;
+    /**
+     * Dev aid: force the phone calendar chrome (footer toolbar, mobile initial
+     * view) even when the window is wider than 500px.
+     */
+    forceMobileLayout: boolean;
 }
 
 export const DEFAULT_SETTINGS: FullCalendarSettings = {
@@ -44,6 +49,7 @@ export const DEFAULT_SETTINGS: FullCalendarSettings = {
     timeFormat24h: false,
     clickToCreateEventFromMonthView: true,
     todayBackgroundColor: "#4a4a4a",
+    forceMobileLayout: false,
 };
 
 const WEEKDAYS = [
@@ -66,16 +72,18 @@ const INITIAL_VIEW_OPTIONS = {
         listWeek: "List",
     },
     MOBILE: {
+        dayGridMonth: "Month",
         timeGridWeek: "Week",
         timeGrid3Days: "3 Days",
         timeGridDay: "Day",
-        listWeek: "List",
+        listMonth: "List",
     },
     SIDEBAR: {
         timeGridWeek: "Week",
         timeGrid3Days: "3 Days",
         timeGridDay: "Day",
-        listWeek: "List",
+        dayGridMonth: "Month",
+        listMonth: "List",
     },
 };
 
@@ -275,6 +283,18 @@ export class FullCalendarSettingTab extends PluginSettingTab {
                 toggle.onChange(async (val) => {
                     this.plugin.settings.clickToCreateEventFromMonthView = val;
                     await this.plugin.saveSettings();
+                });
+            });
+
+        new Setting(containerEl)
+            .setName("Force mobile layout")
+            .setDesc(
+                "Use the phone calendar chrome (footer toolbar, mobile views) on desktop for development. Also available as a toolbar button and command."
+            )
+            .addToggle((toggle) => {
+                toggle.setValue(this.plugin.settings.forceMobileLayout);
+                toggle.onChange(async (val) => {
+                    await this.plugin.setForceMobileLayout(val);
                 });
             });
 

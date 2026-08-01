@@ -9,6 +9,7 @@ Obsidian calendar plugin based on [FullCalendar](https://github.com/fullcalendar
 - Today button stays enabled in week/month views
 - Today highlight recovers correctly after sleep / overnight
 - Configurable today background color (Settings → Full Calendar; default `#4a4a4a`)
+- **Force mobile layout** toggle (toolbar `mobile`/`desktop` button, command, or Settings) for developing phone chrome on desktop
 - Local calendars load notes in nested subfolders (e.g. `Year/2026-07/...`)
 - Click a **day number** to open that day's Daily/Periodic Notes note (creates it if needed); click the **rest of the cell** to create an event
 - Multi-day all-day events use an inclusive `endDate` in frontmatter and render as spanning bars in month/week views
