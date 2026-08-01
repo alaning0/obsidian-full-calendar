@@ -170,17 +170,24 @@ export default class FullCalendarPlugin extends Plugin {
 
         this.addCommand({
             id: "full-calendar-open-sidebar",
-            name: "Open in sidebar",
-            callback: () => {
-                if (
-                    this.app.workspace.getLeavesOfType(
-                        FULL_CALENDAR_SIDEBAR_VIEW_TYPE
-                    ).length
-                ) {
+            name: "Open in left sidebar",
+            callback: async () => {
+                const existing = this.app.workspace.getLeavesOfType(
+                    FULL_CALENDAR_SIDEBAR_VIEW_TYPE
+                );
+                if (existing.length) {
+                    const leaf = existing[0];
+                    this.app.workspace.revealLeaf(leaf);
+                    this.app.workspace.setActiveLeaf(leaf, { focus: true });
                     return;
                 }
-                this.app.workspace.getRightLeaf(false).setViewState({
+                const leaf = this.app.workspace.getLeftLeaf(false);
+                if (!leaf) {
+                    return;
+                }
+                await leaf.setViewState({
                     type: FULL_CALENDAR_SIDEBAR_VIEW_TYPE,
+                    active: true,
                 });
             },
         });
@@ -202,6 +209,11 @@ export default class FullCalendarPlugin extends Plugin {
             DEFAULT_SETTINGS,
             await this.loadData()
         );
+        // Migrate older settings that lacked sidebar initial view.
+        if (!this.settings.initialView.sidebar) {
+            this.settings.initialView.sidebar =
+                DEFAULT_SETTINGS.initialView.sidebar;
+        }
     }
 
     async saveSettings() {

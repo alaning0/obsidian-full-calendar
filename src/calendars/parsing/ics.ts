@@ -71,17 +71,30 @@ function icsToOFC(input: ical.Event): OFCEvent {
         };
     } else {
         const date = getDate(input.startDate);
-        const endDate =
+        const exclusiveEnd =
             specifiesEnd(input) && input.endDate
                 ? getDate(input.endDate)
                 : undefined;
         const allDay = input.startDate.isDate;
+        // ICS/Google all-day DTEND is exclusive; store inclusive last day.
+        const endDate =
+            allDay && exclusiveEnd
+                ? (() => {
+                      const inclusive = DateTime.fromISO(exclusiveEnd, {
+                          zone: "utc",
+                      }).minus({ days: 1 });
+                      const inclusiveStr = inclusive.toISODate();
+                      return date !== inclusiveStr ? inclusiveStr : null;
+                  })()
+                : exclusiveEnd && date !== exclusiveEnd
+                ? exclusiveEnd
+                : null;
         return {
             type: "single",
             id: `ics::${input.uid}::${date}::single`,
             title: input.summary,
             date,
-            endDate: date !== endDate ? endDate || null : null,
+            endDate,
             ...(allDay
                 ? { allDay: true }
                 : {

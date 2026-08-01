@@ -6,6 +6,9 @@ import { rrulestr } from "rrule";
 
 /*
  * Functions for converting between the types used by the FullCalendar view plugin and types used internally by Obsidian Full Calendar.
+ *
+ * All-day endDate convention: frontmatter stores the inclusive last visible day.
+ * FullCalendar expects an exclusive end (the day after the last visible day).
  */
 
 const parseTime = (time: string): Duration | null => {
@@ -59,6 +62,38 @@ const getTime = (date: Date): string =>
 
 const getDate = (date: Date): string => DateTime.fromJSDate(date).toISODate();
 
+/** Shift a YYYY-MM-DD string by `days` (can be negative). */
+const shiftDateString = (date: string, days: number): string | null => {
+    const parsed = DateTime.fromISO(date, { zone: "utc" });
+    if (parsed.invalidReason) {
+        console.error(
+            `FC: Error shifting date '${date}': ${parsed.invalidReason}`
+        );
+        return null;
+    }
+    return parsed.plus({ days }).toISODate();
+};
+
+/** Inclusive last day → FullCalendar exclusive end. */
+const inclusiveEndToExclusive = (endDate: string): string | undefined => {
+    return shiftDateString(endDate, 1) || undefined;
+};
+
+/**
+ * FullCalendar exclusive end → inclusive last day.
+ * Returns null when the event is a single day (inclusive end === start).
+ */
+const exclusiveEndToInclusive = (
+    startDate: string,
+    exclusiveEnd: string
+): string | null => {
+    const inclusive = shiftDateString(exclusiveEnd, -1);
+    if (!inclusive || inclusive === startDate) {
+        return null;
+    }
+    return inclusive;
+};
+
 const combineDateTimeStrings = (date: string, time: string): string | null => {
     const parsedDate = DateTime.fromISO(date);
     if (parsedDate.invalidReason) {
@@ -87,7 +122,11 @@ export function dateEndpointsToFrontmatter(
     allDay: boolean
 ): Partial<OFCEvent> {
     const date = getDate(start);
-    const endDate = getDate(end);
+    let endDate = getDate(end);
+    if (allDay) {
+        // FullCalendar all-day end is exclusive; persist the last visible day.
+        endDate = exclusiveEndToInclusive(date, endDate) || date;
+    }
     return {
         type: "single",
         date,
@@ -219,7 +258,10 @@ export function toEventInput(
             event = {
                 ...event,
                 start: frontmatter.date,
-                end: frontmatter.endDate || undefined,
+                // Inclusive endDate in notes → exclusive end for FullCalendar.
+                end: frontmatter.endDate
+                    ? inclusiveEndToExclusive(frontmatter.endDate)
+                    : undefined,
                 extendedProps: {
                     isTask:
                         frontmatter.completed !== undefined &&
@@ -236,7 +278,12 @@ export function toEventInput(
 export function fromEventApi(event: EventApi): OFCEvent {
     const isRecurring: boolean = event.extendedProps.daysOfWeek !== undefined;
     const startDate = getDate(event.start as Date);
-    const endDate = getDate(event.end as Date);
+    const exclusiveEnd = getDate(event.end as Date);
+    const endDate = event.allDay
+        ? exclusiveEndToInclusive(startDate, exclusiveEnd)
+        : startDate !== exclusiveEnd
+        ? exclusiveEnd
+        : null;
     return {
         title: event.title,
         ...(event.allDay
@@ -263,7 +310,7 @@ export function fromEventApi(event: EventApi): OFCEvent {
             : {
                   type: "single",
                   date: startDate,
-                  ...(startDate !== endDate ? { endDate } : { endDate: null }),
+                  endDate,
                   completed: event.extendedProps.taskCompleted,
               }),
     };

@@ -10,7 +10,11 @@ import {
     toEventInput,
 } from "./interop";
 import { renderOnboarding } from "./onboard";
-import { openFileForEvent, openDailyNoteForDate } from "./actions";
+import {
+    openFileForEvent,
+    openDailyNoteForDate,
+    openWeeklyNoteForDate,
+} from "./actions";
 import { launchCreateModal, launchEditModal } from "./event_modal";
 import { isTask, toggleTask, unmakeTask } from "src/ui/tasks";
 import { UpdateViewCallback } from "src/core/EventCache";
@@ -163,14 +167,8 @@ export class CalendarView extends ItemView {
                 }
             },
             select: async (start, end, allDay, viewType) => {
-                if (viewType === "dayGridMonth") {
-                    // Month view will set the end day to the next day even on a single-day event.
-                    // This is problematic when moving an event created in the month view to the
-                    // time grid to give it a time.
-
-                    // The fix is just to subtract 1 from the end date before processing.
-                    end.setDate(end.getDate() - 1);
-                }
+                // All-day exclusive→inclusive conversion lives in
+                // dateEndpointsToFrontmatter (month used to special-case -1 here).
                 const partialEvent = dateEndpointsToFrontmatter(
                     start,
                     end,
@@ -227,6 +225,16 @@ export class CalendarView extends ItemView {
             openDailyNote: async (date) => {
                 try {
                     await openDailyNoteForDate(this.app, date);
+                } catch (e) {
+                    if (e instanceof Error) {
+                        console.error(e);
+                        new Notice(e.message);
+                    }
+                }
+            },
+            openWeeklyNote: async (date) => {
+                try {
+                    await openWeeklyNoteForDate(this.app, date);
                 } catch (e) {
                     if (e instanceof Error) {
                         console.error(e);

@@ -46,6 +46,274 @@
 	cursor: pointer;
 }
 
+/* Year overview: grow with content so the Obsidian pane scrolls (not FC expandRows). */
+.fc.ofc-year-mode {
+	height: auto !important;
+	min-height: 100%;
+}
+.fc.ofc-year-mode .fc-view-harness,
+.fc.ofc-year-mode .fc-view-harness-active {
+	height: auto !important;
+	max-height: none !important;
+}
+.fc.ofc-year-mode .fc-scroller,
+.fc.ofc-year-mode .fc-scroller-liquid,
+.fc.ofc-year-mode .fc-scroller-liquid-absolute {
+	overflow: visible !important;
+	height: auto !important;
+	position: relative !important;
+}
+.fc.ofc-year-mode .fc-daygrid-body,
+.fc.ofc-year-mode .fc-scrollgrid-sync-table {
+	height: auto !important;
+}
+
+/* Compact year overview: scroll the whole calendar year as one tall grid.
+   View class is fc-dayGridYear-view; we also tag with ofc-year-overview. */
+.ofc-year-overview .fc-daygrid-day-frame {
+	min-height: 2.75em;
+}
+.ofc-year-overview .fc-daygrid-day-number {
+	font-size: 0.75em;
+	padding: 2px 4px;
+}
+.ofc-year-overview .fc-daygrid-event {
+	font-size: 0.7em;
+	margin-top: 1px;
+}
+.ofc-year-overview .fc-daygrid-dot-event {
+	padding: 1px 2px;
+}
+.ofc-year-overview .fc-daygrid-more-link {
+	font-size: 0.7em;
+}
+.ofc-year-overview .fc-daygrid-week-number {
+	font-size: 0.65em;
+	min-width: 1.35em;
+	padding: 1px 2px;
+}
+.ofc-year-overview .ofc-year-month-row .ofc-year-month-header {
+	position: sticky;
+	top: 0;
+	z-index: 4;
+	padding: 0.45em 0.65em;
+	font-weight: 600;
+	font-size: 0.95em;
+	letter-spacing: 0.01em;
+	text-align: left;
+	color: var(--text-normal);
+	background: var(--background-primary);
+	border-bottom: 1px solid var(--background-modifier-border);
+	box-shadow: 0 1px 0 var(--background-modifier-border);
+}
+
+/* Week numbers (ISO) — left rail on first day of each week in dayGrid. */
+.fc .fc-daygrid-week-number {
+	font-size: 0.75em;
+	font-weight: 600;
+	color: var(--text-muted);
+	background-color: var(--background-secondary);
+	min-width: 1.75em;
+	cursor: pointer;
+}
+
+/* Seasons overview page: month grid + week tracker. */
+.ofc-seasons-page {
+	display: flex;
+	flex-direction: column;
+	gap: 1.5rem;
+	padding: 1.25rem 1.5rem 2rem;
+	max-width: 32rem;
+	margin: 0 auto;
+}
+
+/* Seasons overview: Southern Hemisphere months in a label + 3-column grid. */
+.ofc-seasons {
+	display: grid;
+	grid-template-columns: 5.5rem repeat(3, minmax(4.5rem, 1fr));
+	gap: 0.65rem 0.75rem;
+	align-items: stretch;
+}
+.ofc-seasons-label {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	font-size: 0.85em;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+	color: var(--text-muted);
+	padding-right: 0.25rem;
+}
+.ofc-seasons-month {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.25rem;
+	min-height: 2.75rem;
+	padding: 0.5rem 0.4rem;
+	border-radius: var(--radius-s);
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	color: var(--text-normal);
+	font-size: 0.95em;
+	font-weight: 500;
+	text-align: center;
+}
+.ofc-seasons-month.is-empty {
+	visibility: hidden;
+	border: none;
+	background: transparent;
+	min-height: 0;
+	padding: 0;
+}
+.ofc-seasons-month.is-current {
+	background: var(--interactive-accent);
+	border-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+	font-weight: 600;
+}
+.ofc-seasons-star {
+	font-size: 0.85em;
+	line-height: 1;
+}
+.ofc-seasons-month-year {
+	font-size: 0.7em;
+	opacity: 0.75;
+	font-weight: 500;
+}
+
+.ofc-seasons-week-tracker {
+	display: flex;
+	flex-direction: column;
+	gap: 0.65rem;
+}
+.ofc-seasons-week-summary {
+	font-size: 0.85em;
+	font-weight: 500;
+	color: var(--text-muted);
+}
+.ofc-seasons-weeks {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(2.35rem, 1fr));
+	gap: 0.35rem;
+}
+.ofc-seasons-week {
+	appearance: none;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 1.85rem;
+	padding: 0.2rem 0.15rem;
+	border-radius: var(--radius-s);
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	color: var(--text-normal);
+	font-size: 0.7em;
+	font-weight: 600;
+	font-family: inherit;
+	line-height: 1;
+	box-shadow: none;
+}
+.ofc-seasons-week.is-past {
+	opacity: 0.45;
+	color: var(--text-muted);
+}
+.ofc-seasons-week.is-current {
+	background: var(--interactive-accent);
+	border-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+	opacity: 1;
+}
+.ofc-seasons-week.is-clickable {
+	cursor: pointer;
+}
+.ofc-seasons-week.is-clickable:hover {
+	border-color: var(--interactive-accent);
+}
+.ofc-seasons-week.is-clickable.is-current:hover {
+	filter: brightness(1.05);
+}
+.ofc-seasons-week:disabled {
+	cursor: default;
+	opacity: 0.7;
+}
+
+.ofc-seasons-quarter-tracker {
+	display: flex;
+	flex-direction: column;
+	gap: 0.65rem;
+}
+.ofc-seasons-quarter-summary {
+	font-size: 0.85em;
+	font-weight: 500;
+	color: var(--text-muted);
+}
+.ofc-seasons-quarters {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 0.5rem;
+}
+.ofc-seasons-quarter {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.25rem;
+	min-height: 3.5rem;
+	padding: 0.55rem 0.35rem;
+	border-radius: var(--radius-s);
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	text-align: center;
+}
+.ofc-seasons-quarter.is-past {
+	opacity: 0.45;
+}
+.ofc-seasons-quarter.is-current {
+	background: var(--interactive-accent);
+	border-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+	opacity: 1;
+}
+.ofc-seasons-quarter-title {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.2rem;
+	font-size: 0.95em;
+	font-weight: 600;
+}
+.ofc-seasons-quarter-months {
+	font-size: 0.7em;
+	font-weight: 500;
+	color: var(--text-muted);
+	line-height: 1.2;
+}
+.ofc-seasons-quarter.is-current .ofc-seasons-quarter-months {
+	color: var(--text-on-accent);
+	opacity: 0.9;
+}
+
+@media (max-width: 500px) {
+	.ofc-seasons-page {
+		padding: 1rem;
+		max-width: none;
+	}
+	.ofc-seasons {
+		grid-template-columns: 4.25rem repeat(3, minmax(0, 1fr));
+		gap: 0.45rem;
+	}
+	.ofc-seasons-month {
+		min-height: 2.4rem;
+		font-size: 0.85em;
+	}
+	.ofc-seasons-weeks {
+		grid-template-columns: repeat(auto-fill, minmax(2.1rem, 1fr));
+	}
+	.ofc-seasons-quarters {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
 .fc-button-active {
 	color: var(--text-on-accent) !important;
 }
