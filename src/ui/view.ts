@@ -167,14 +167,8 @@ export class CalendarView extends ItemView {
                 }
             },
             select: async (start, end, allDay, viewType) => {
-                if (viewType === "dayGridMonth") {
-                    // Month view will set the end day to the next day even on a single-day event.
-                    // This is problematic when moving an event created in the month view to the
-                    // time grid to give it a time.
-
-                    // The fix is just to subtract 1 from the end date before processing.
-                    end.setDate(end.getDate() - 1);
-                }
+                // All-day exclusive→inclusive conversion lives in
+                // dateEndpointsToFrontmatter (month used to special-case -1 here).
                 const partialEvent = dateEndpointsToFrontmatter(
                     start,
                     end,

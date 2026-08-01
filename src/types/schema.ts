@@ -59,7 +59,8 @@ export const TimeSchema = z.discriminatedUnion("allDay", [
 ]);
 
 export const CommonSchema = z.object({
-    title: z.string(),
+    // Obsidian YAML may parse unquoted titles like `title: 1` as numbers.
+    title: z.coerce.string(),
     id: z.string().optional(),
 });
 

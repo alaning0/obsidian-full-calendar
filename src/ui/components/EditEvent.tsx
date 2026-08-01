@@ -250,14 +250,27 @@ export const EditEvent = ({
                 </p>
                 <p>
                     {!isRecurring && (
-                        <input
-                            type="date"
-                            id="date"
-                            value={date}
-                            required={!isRecurring}
-                            // @ts-ignore
-                            onChange={makeChangeListener(setDate, (x) => x)}
-                        />
+                        <>
+                            <label htmlFor="date">Start </label>
+                            <input
+                                type="date"
+                                id="date"
+                                value={date}
+                                required={!isRecurring}
+                                // @ts-ignore
+                                onChange={makeChangeListener(setDate, (x) => x)}
+                            />
+                            <label htmlFor="eventEndDate"> End </label>
+                            <input
+                                type="date"
+                                id="eventEndDate"
+                                value={endDate || ""}
+                                min={date || undefined}
+                                onChange={(e) =>
+                                    setEndDate(e.target.value || undefined)
+                                }
+                            />
+                        </>
                     )}
 
                     {allDay ? (
