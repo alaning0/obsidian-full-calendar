@@ -240,6 +240,98 @@ function buildWeekChipGrid(
     return grid;
 }
 
+/** Calendar quarters for year Y: Q1 Jan–Mar … Q4 Oct–Dec. */
+const CALENDAR_QUARTERS: {
+    quarter: number;
+    months: number[];
+}[] = [
+    { quarter: 1, months: [0, 1, 2] },
+    { quarter: 2, months: [3, 4, 5] },
+    { quarter: 3, months: [6, 7, 8] },
+    { quarter: 4, months: [9, 10, 11] },
+];
+
+function currentCalendarQuarter(now = new Date()): {
+    year: number;
+    quarter: number;
+} {
+    return {
+        year: now.getFullYear(),
+        quarter: Math.floor(now.getMonth() / 3) + 1,
+    };
+}
+
+function buildQuarterSummary(year: number): HTMLElement {
+    const summary = document.createElement("div");
+    summary.className = "ofc-seasons-quarter-summary";
+
+    const now = currentCalendarQuarter();
+    if (now.year === year) {
+        const left = Math.max(0, 4 - now.quarter);
+        const pct = Math.round((left / 4) * 100);
+        summary.textContent = `Q${now.quarter} of 4 · ${left} quarter${
+            left === 1 ? "" : "s"
+        } left (${pct}%)`;
+    } else {
+        summary.textContent = `4 quarters in ${year}`;
+    }
+
+    return summary;
+}
+
+function buildQuarterGrid(year: number): HTMLElement {
+    const grid = document.createElement("div");
+    grid.className = "ofc-seasons-quarters";
+
+    const now = currentCalendarQuarter();
+    const isThisYear = now.year === year;
+
+    for (const q of CALENDAR_QUARTERS) {
+        const card = document.createElement("div");
+        card.className = "ofc-seasons-quarter";
+
+        if (isThisYear) {
+            if (q.quarter < now.quarter) {
+                card.classList.add("is-past");
+            } else if (q.quarter === now.quarter) {
+                card.classList.add("is-current");
+            } else {
+                card.classList.add("is-future");
+            }
+        }
+
+        const title = document.createElement("div");
+        title.className = "ofc-seasons-quarter-title";
+        if (q.quarter === now.quarter && isThisYear) {
+            const star = document.createElement("span");
+            star.className = "ofc-seasons-star";
+            star.setAttribute("aria-hidden", "true");
+            star.textContent = "⭐️";
+            title.appendChild(star);
+        }
+        const titleText = document.createElement("span");
+        titleText.textContent = `Q${q.quarter}`;
+        title.appendChild(titleText);
+        card.appendChild(title);
+
+        const months = document.createElement("div");
+        months.className = "ofc-seasons-quarter-months";
+        months.textContent = q.months.map((m) => MONTH_SHORT[m]).join(" · ");
+        card.appendChild(months);
+
+        card.setAttribute(
+            "aria-label",
+            q.quarter === now.quarter && isThisYear
+                ? `Q${q.quarter} (current): ${months.textContent}`
+                : `Q${q.quarter}: ${months.textContent}`
+        );
+
+        grid.appendChild(card);
+    }
+
+    return grid;
+}
+
 function buildSeasonsDom(
     year: number,
     openWeeklyNote?: OpenWeeklyNote
@@ -255,6 +347,12 @@ function buildSeasonsDom(
     tracker.appendChild(buildWeekSummary(year, totalWeeks));
     tracker.appendChild(buildWeekChipGrid(year, openWeeklyNote));
     page.appendChild(tracker);
+
+    const quarters = document.createElement("div");
+    quarters.className = "ofc-seasons-quarter-tracker";
+    quarters.appendChild(buildQuarterSummary(year));
+    quarters.appendChild(buildQuarterGrid(year));
+    page.appendChild(quarters);
 
     return page;
 }
