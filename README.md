@@ -17,7 +17,7 @@ Obsidian calendar plugin based on [FullCalendar](https://github.com/fullcalendar
 - Ribbon / open actions focus an existing calendar or day-note tab when it is already open but unfocused
 - Sidebar calendar opens on the **left** with week view by default (command: **Open in left sidebar**)
 - **Year** view: scrollable big-picture day grid for the whole calendar year, sticky month banners, scrolls to today
-- **Seasons** view: Southern Hemisphere month layout for the year (Summer→Autumn→Winter→Spring), with the current month marked; ISO week chip tracker shows weeks left and opens weekly notes on click; calendar quarter cards (Q1–Q4) with progress summary
+- **Seasons** view: Southern Hemisphere month layout for the year (Summer→Autumn→Winter→Spring), with the current month marked; ISO week chip tracker shows each week’s month (from the Monday start), weeks left, and opens weekly notes on click; calendar quarter cards (Q1–Q4) with progress summary
 - ISO **week numbers** on the left in month/year (and other) views
 
 ## Installation

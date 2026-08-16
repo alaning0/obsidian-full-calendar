@@ -210,18 +210,26 @@ function buildWeekChipGrid(
             }
         }
 
+        const date = dateForIsoWeek(year, week);
+        const monthShort = MONTH_SHORT[date.getMonth()];
         const label = `W${week}`;
-        chip.textContent = label;
+        const weekEl = document.createElement("span");
+        weekEl.className = "ofc-seasons-week-num";
+        weekEl.textContent = label;
+        const monthEl = document.createElement("span");
+        monthEl.className = "ofc-seasons-week-month";
+        monthEl.textContent = monthShort;
+        chip.appendChild(weekEl);
+        chip.appendChild(monthEl);
         chip.setAttribute(
             "aria-label",
             week === now.week && isThisYear
-                ? `${label} (current week)`
-                : `ISO week ${week}, ${year}`
+                ? `${label} ${monthShort} (current week)`
+                : `ISO week ${week}, ${monthShort} ${year}`
         );
 
         if (openWeeklyNote) {
             chip.classList.add("is-clickable");
-            const date = dateForIsoWeek(year, week);
             chip.addEventListener("mousedown", (e) => {
                 e.stopPropagation();
             });
