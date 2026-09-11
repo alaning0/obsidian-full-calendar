@@ -72,6 +72,35 @@ const getHeadingPosition = (
     return { start: startingPos.end, end: endingPos?.start || endOfDoc };
 };
 
+const headingExists = (
+    headingText: string,
+    metadata: CachedMetadata
+): boolean => {
+    return metadata.headings?.some((h) => h.heading === headingText) ?? false;
+};
+
+const getEndOfDoc = (metadata: CachedMetadata): Loc | null => {
+    const sections = metadata.sections;
+    if (sections && sections.length > 0) {
+        return sections[sections.length - 1].position.end;
+    }
+    const candidates: Loc[] = [];
+    if (metadata.listItems && metadata.listItems.length > 0) {
+        candidates.push(
+            metadata.listItems[metadata.listItems.length - 1].position.end
+        );
+    }
+    if (metadata.headings && metadata.headings.length > 0) {
+        candidates.push(
+            metadata.headings[metadata.headings.length - 1].position.end
+        );
+    }
+    if (candidates.length === 0) {
+        return null;
+    }
+    return candidates.reduce((a, b) => (a.offset > b.offset ? a : b));
+};
+
 const getListsUnderHeading = (
     headingText: string,
     metadata: CachedMetadata
@@ -79,7 +108,7 @@ const getListsUnderHeading = (
     if (!metadata.listItems) {
         return [];
     }
-    const endOfDoc = metadata.sections?.last()?.position.end;
+    const endOfDoc = getEndOfDoc(metadata);
     if (!endOfDoc) {
         return [];
     }
@@ -92,6 +121,10 @@ const getListsUnderHeading = (
             headingPos.start.offset < l.position.start.offset &&
             l.position.end.offset <= headingPos.end.offset
     );
+};
+
+const getAllListItems = (metadata: CachedMetadata): ListItemCache[] => {
+    return metadata.listItems || [];
 };
 
 const listRegex = /^(\s*)\-\s+(\[(.)\]\s+)?/;
@@ -270,7 +303,9 @@ export default class DailyNoteCalendar extends EditableCalendar {
         if (!cache) {
             return [];
         }
-        const listItems = getListsUnderHeading(this.heading, cache);
+        const listItems = headingExists(this.heading, cache)
+            ? getListsUnderHeading(this.heading, cache)
+            : getAllListItems(cache);
         const inlineEvents = await this.app.process(file, (text) =>
             getAllInlineEventsFromFile(text, listItems, { date })
         );
