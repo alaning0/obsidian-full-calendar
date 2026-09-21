@@ -38,7 +38,13 @@ export interface FullCalendarSettings {
 }
 
 export const DEFAULT_SETTINGS: FullCalendarSettings = {
-    calendarSources: [],
+    calendarSources: [
+        {
+            type: "dailynote",
+            heading: "Events",
+            color: "#3b82f6",
+        },
+    ],
     defaultCalendar: 0,
     firstDay: 0,
     initialView: {
