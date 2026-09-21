@@ -106,6 +106,76 @@ function localDateISO(date: Date): string {
 }
 
 /**
+ * Attach a tap handler that works reliably on both touch and mouse.
+ * Uses pointer events with a simple tap detector: pointerdown → pointerup
+ * with small movement threshold and short duration.
+ */
+function attachTapHandler(el: HTMLElement, onTap: () => void) {
+    const TAP_THRESHOLD_PX = 10;
+    const TAP_THRESHOLD_MS = 500;
+    let downX = 0;
+    let downY = 0;
+    let downTime = 0;
+    let pointerId: number | null = null;
+
+    const onPointerDown = (e: PointerEvent) => {
+        // Only handle primary button / single touch
+        if (e.button !== 0 && e.pointerType === "mouse") {
+            return;
+        }
+        downX = e.clientX;
+        downY = e.clientY;
+        downTime = Date.now();
+        pointerId = e.pointerId;
+        e.stopPropagation();
+    };
+
+    const onPointerUp = (e: PointerEvent) => {
+        if (pointerId === null || e.pointerId !== pointerId) {
+            return;
+        }
+        const dx = Math.abs(e.clientX - downX);
+        const dy = Math.abs(e.clientY - downY);
+        const dt = Date.now() - downTime;
+        pointerId = null;
+
+        if (
+            dx < TAP_THRESHOLD_PX &&
+            dy < TAP_THRESHOLD_PX &&
+            dt < TAP_THRESHOLD_MS
+        ) {
+            e.preventDefault();
+            e.stopPropagation();
+            onTap();
+        }
+    };
+
+    const onPointerCancel = () => {
+        pointerId = null;
+    };
+
+    el.addEventListener("pointerdown", onPointerDown, { passive: false });
+    el.addEventListener("pointerup", onPointerUp, { passive: false });
+    el.addEventListener("pointercancel", onPointerCancel);
+
+    // Prevent FullCalendar from capturing touch for selection/drag.
+    el.addEventListener(
+        "touchend",
+        (e) => {
+            e.stopPropagation();
+        },
+        { passive: true }
+    );
+
+    // Legacy click fallback for accessibility (keyboard enter, etc.)
+    el.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onTap();
+    });
+}
+
+/**
  * Resolve the year-view root. FC names the class from viewSpec.type
  * (`fc-dayGridYear-view`). Also accept ofc tag / legacy selectors.
  */
@@ -678,14 +748,15 @@ export function renderCalendar(
                 return;
             }
             info.el.classList.add("ofc-day-header-note");
-            info.el.addEventListener("mousedown", (e) => {
-                e.stopPropagation();
-            });
-            info.el.addEventListener("click", (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                void openDailyNote(info.date);
-            });
+            const tapAction = () => void openDailyNote(info.date);
+            attachTapHandler(info.el, tapAction);
+            // Also attach to the inner cushion element for better hit area.
+            const cushion = info.el.querySelector(
+                ".fc-col-header-cell-cushion"
+            ) as HTMLElement | null;
+            if (cushion) {
+                attachTapHandler(cushion, tapAction);
+            }
         },
 
         weekNumberDidMount: (info) => {
@@ -693,14 +764,15 @@ export function renderCalendar(
                 return;
             }
             info.el.classList.add("ofc-week-number-note");
-            info.el.addEventListener("mousedown", (e) => {
-                e.stopPropagation();
-            });
-            info.el.addEventListener("click", (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                void openWeeklyNote(info.date);
-            });
+            const tapAction = () => void openWeeklyNote(info.date);
+            attachTapHandler(info.el, tapAction);
+            // Also attach to inner cushion for timeGrid axis cells.
+            const cushion = info.el.querySelector(
+                ".fc-timegrid-axis-cushion"
+            ) as HTMLElement | null;
+            if (cushion) {
+                attachTapHandler(cushion, tapAction);
+            }
         },
 
         dayCellDidMount: (info) => {
@@ -727,15 +799,7 @@ export function renderCalendar(
             if (!dayNumberEl) {
                 return;
             }
-            // Stop selection/create-event when interacting with the day number.
-            dayNumberEl.addEventListener("mousedown", (e) => {
-                e.stopPropagation();
-            });
-            dayNumberEl.addEventListener("click", (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                void openDailyNote(info.date);
-            });
+            attachTapHandler(dayNumberEl, () => void openDailyNote(info.date));
         },
 
         viewDidMount: (info) => {
