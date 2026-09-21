@@ -1,17 +1,24 @@
-name: CI Build
+name: CI
 
 on:
   push:
     branches:
       - "**"
+    tags-ignore:
+      - "**"
   pull_request:
+  workflow_call:
 
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build:
-    name: Build plugin
+  ci:
+    name: Lint, Test & Build
     runs-on: ubuntu-latest
 
     steps:
@@ -27,16 +34,23 @@ jobs:
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
+      - name: Lint
+        run: npm run lint
+
+      - name: Type-check
+        run: npm run compile
+
       - name: Run tests
-        run: npm test
+        run: npm run test
 
       - name: Build plugin
         run: npm run build
 
-      - name: Ensure required artifacts exist
+      - name: Verify required artifacts exist
         run: |
           test -f main.js
           test -f manifest.json
+          # esbuild emits main.css from CSS imports; Obsidian expects styles.css
           if [ -f main.css ]; then mv main.css styles.css; fi
           test -f styles.css
 

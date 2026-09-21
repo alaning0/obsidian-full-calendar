@@ -47,7 +47,7 @@ Copy `main.js`, `manifest.json`, and `styles.css` (rename `main.css` → `styles
 
 ### Publishing a release
 
-Push a version tag to trigger [.github/workflows/release.yml](.github/workflows/release.yml), which builds the plugin and uploads release assets:
+Push a version tag to trigger [.github/workflows/release.yml](.github/workflows/release.yml), which runs CI, verifies the tag matches `manifest.json` version, and uploads release assets:
 
 ```bash
 npm version patch   # bumps package.json + manifest via the version script
