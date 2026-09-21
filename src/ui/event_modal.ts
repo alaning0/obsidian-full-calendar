@@ -20,24 +20,29 @@ export function launchCreateModal(
                 name: cal.name,
             };
         });
-    new ReactModal(plugin.app, async (closeModal) =>
-        React.createElement(EditEvent, {
-            initialEvent: partialEvent,
-            calendars,
-            defaultCalendarIndex: 0,
-            submit: async (data, calendarIndex) => {
-                const calendarId = calendars[calendarIndex].id;
-                try {
-                    await plugin.cache.addEvent(calendarId, data);
-                } catch (e) {
-                    if (e instanceof Error) {
-                        new Notice("Error when creating event: " + e.message);
-                        console.error(e);
+    new ReactModal(
+        plugin.app,
+        async (closeModal) =>
+            React.createElement(EditEvent, {
+                initialEvent: partialEvent,
+                calendars,
+                defaultCalendarIndex: 0,
+                submit: async (data, calendarIndex) => {
+                    const calendarId = calendars[calendarIndex].id;
+                    try {
+                        await plugin.cache.addEvent(calendarId, data);
+                    } catch (e) {
+                        if (e instanceof Error) {
+                            new Notice(
+                                "Error when creating event: " + e.message
+                            );
+                            console.error(e);
+                        }
                     }
-                }
-                closeModal();
-            },
-        })
+                    closeModal();
+                },
+            }),
+        { pinTop: true }
     ).open();
 }
 

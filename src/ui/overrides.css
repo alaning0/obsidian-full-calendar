@@ -350,6 +350,10 @@
 	max-height: calc(100vh - 3rem);
 	overflow: auto;
 }
+/* Mobile: extra bottom padding keeps Save above keyboard/home indicator. */
+.is-phone .modal.ofc-modal-top {
+	padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+}
 
 .fc-button-active {
 	color: var(--text-on-accent) !important;
