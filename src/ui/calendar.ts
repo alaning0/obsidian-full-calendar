@@ -742,6 +742,34 @@ export function renderCalendar(
             // Always clear from the whole calendar; month view must never keep these.
             clearYearMonthHeaders(cal.el);
 
+            // Mobile footer: reset scroll so Month button stays visible.
+            // Browser may auto-scroll to the active button, hiding earlier siblings.
+            // Use rAF to run after layout/scroll is settled.
+            if (isMobile) {
+                const resetFooterScroll = () => {
+                    const footer = cal.el.querySelector(
+                        ".fc-footer-toolbar"
+                    ) as HTMLElement | null;
+                    const leftChunk = footer?.querySelector(
+                        ".fc-toolbar-chunk"
+                    ) as HTMLElement | null;
+                    if (leftChunk) {
+                        leftChunk.scrollLeft = 0;
+                    }
+                    const btnGroup = leftChunk?.querySelector(
+                        ".fc-button-group"
+                    ) as HTMLElement | null;
+                    if (btnGroup) {
+                        btnGroup.scrollLeft = 0;
+                    }
+                };
+                resetFooterScroll();
+                window.requestAnimationFrame(() => {
+                    resetFooterScroll();
+                    window.requestAnimationFrame(resetFooterScroll);
+                });
+            }
+
             if (info.view.type !== "dayGridYear") {
                 return;
             }

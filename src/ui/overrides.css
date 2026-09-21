@@ -389,3 +389,44 @@
 	border-color: black !important;
 	border-width: 1px !important;
 }
+
+/* Mobile footer toolbar: prevent button group overflow from hiding the first button.
+   On narrow screens the view-switcher can overflow; clicking an inner button (e.g. "7")
+   may trigger scrollIntoView, pushing "m" (Month) off-screen. Disable overflow/scroll
+   on the toolbar and all ancestors, tighten button padding, and prevent focus-scroll. */
+.is-phone .fc .fc-footer-toolbar {
+	overflow: visible !important;
+	contain: layout;
+}
+.is-phone .fc .fc-footer-toolbar > * {
+	overflow: visible !important;
+}
+.is-phone .fc .fc-footer-toolbar .fc-toolbar-chunk {
+	overflow: visible !important;
+	flex-shrink: 1;
+	min-width: 0;
+}
+.is-phone .fc .fc-footer-toolbar .fc-toolbar-chunk:first-child {
+	flex-grow: 1;
+	max-width: calc(100% - 8rem);
+}
+.is-phone .fc .fc-footer-toolbar .fc-button-group {
+	display: inline-flex;
+	overflow: visible !important;
+	flex-wrap: nowrap;
+	gap: 0;
+}
+.is-phone .fc .fc-footer-toolbar .fc-button {
+	padding: 0.35em 0.5em !important;
+	font-size: 0.85em;
+	min-width: 0;
+	flex-shrink: 0;
+}
+/* Prevent browser auto-scroll to active/focused button in view-switcher. */
+.is-phone .fc .fc-footer-toolbar .fc-button:focus {
+	scroll-margin: 0;
+	scroll-padding: 0;
+}
+.is-phone .fc .fc-footer-toolbar .fc-button:focus-visible {
+	outline-offset: -2px;
+}
