@@ -572,7 +572,11 @@ export function renderCalendar(
                   right: "goToday,prev,next toggleMobile",
                   left: "dayGridMonth,timeGridWeek,timeGrid3Days,timeGridDay,listMonth",
               }
-            : false,
+            : {
+                  left: "title",
+                  center: "",
+                  right: "",
+              },
         footerToolbar: isMobile
             ? {
                   right: "goToday,prev,next toggleMobile",
