@@ -550,26 +550,17 @@ export function renderCalendar(
                     }
                 },
             },
-            toggleMobile: {
-                text: settings?.forceMobile ? "desktop" : "mobile",
-                hint: settings?.forceMobile
-                    ? "Switch to desktop layout"
-                    : "Force mobile layout (for development)",
-                click: () => {
-                    onToggleMobileLayout?.();
-                },
-            },
         },
 
         headerToolbar: !isNarrow
             ? {
-                  left: "prev,next goToday toggleMobile",
+                  left: "prev,next goToday",
                   center: "title",
                   right: "ofcSeasons,dayGridYear,dayGridMonth,timeGridWeek,timeGridDay,listWeek",
               }
             : !isMobile
             ? {
-                  right: "goToday,prev,next toggleMobile",
+                  right: "goToday,prev,next",
                   left: "dayGridMonth,timeGridWeek,timeGrid3Days,timeGridDay,listMonth",
               }
             : {
@@ -579,7 +570,7 @@ export function renderCalendar(
               },
         footerToolbar: isMobile
             ? {
-                  right: "goToday,prev,next toggleMobile",
+                  right: "goToday,prev,next",
                   left: "dayGridMonth,timeGridWeek,timeGrid3Days,timeGridDay,listMonth",
               }
             : false,

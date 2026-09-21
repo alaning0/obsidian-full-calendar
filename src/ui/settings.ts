@@ -289,7 +289,7 @@ export class FullCalendarSettingTab extends PluginSettingTab {
         new Setting(containerEl)
             .setName("Force mobile layout")
             .setDesc(
-                "Use the phone calendar chrome (footer toolbar, mobile views) on desktop for development. Also available as a toolbar button and command."
+                "Use the phone calendar chrome (footer toolbar, mobile views) on desktop for development. Also available as a command."
             )
             .addToggle((toggle) => {
                 toggle.setValue(this.plugin.settings.forceMobileLayout);
